@@ -1,0 +1,7 @@
+# Ignorar as pastas de build e arquivos compilados do Arduino/ESP32
+build/
+*.bin
+*.elf
+*.map
+*.hex
+*.partitions.bin

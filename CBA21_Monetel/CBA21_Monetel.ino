@@ -200,7 +200,7 @@ int cont=0;    // posição inicial da catraca =0
 #define PIN_MOD0 25    // Pino de saída que envia o sinal para ativar os modelos de operação
 const int PIN_BTN5 = 36;  // pino de entrada analogica
 const int PIN_BTN6 = 39;   // pino  entrada analogica
-#define ledPin   1   // Pino do led interno
+const int pinoLedInterno = 1; // Pino do led interno
 
 
 // variavéis para armazenar o valor das entradas analogicas
@@ -332,6 +332,15 @@ else
 }
 
 
+// ---> INÍCIO DA ATUALIZAÇÃO DA ORDEM DO WI-FI <---
+  Serial.println("\nConectando à rede Wi-Fi...");
+  setupOTA(); // Liga o Wi-Fi e prepara o OTA Local
+  
+  // Liga o servidor de hora para o OTA do GitHub
+  inicializarNTP(); 
+// ---> FIM DA ATUALIZAÇÃO <---
+
+
   i=0;     // zera variavel auxiliar i
 
   do     // chama função tempo varias vezes
@@ -364,22 +373,20 @@ else
 
    Serial.end();
 
-  pinMode(ledPin, OUTPUT); // define pino do led interno como saída
-
+  pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
 
  for (k = 0; k < 3; k++)
 {
         // Liga o LED
-  digitalWrite(ledPin, HIGH);
+  digitalWrite(pinoLedInterno, HIGH);
   delay(500); 
-  digitalWrite(ledPin, LOW);
+  digitalWrite(pinoLedInterno, LOW);
 delay(500);
 }
-  digitalWrite(ledPin, HIGH);
+  digitalWrite(pinoLedInterno, HIGH);
  Serial.begin(115200);// inicia comunicação serial
     delay(100);
 
-  setupOTA(); // chama funcção OTA
 } // fim void setup()
 
  
@@ -417,24 +424,4 @@ else{
   });
 
   ArduinoOTA.begin();
-}  // fim void setupOTA() 
-
-
-    
-
-                   
-                                                                                    
-
-        
-
-
-
-
-
-
-
-
-
-
-
- 
+}  // fim void setupOTA()

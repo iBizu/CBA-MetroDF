@@ -1,7 +1,8 @@
-
 // função em loop
 void loop()
 {   
+  // Verifica constantemente se é 03:00 da manhã para atualizar via GitHub
+  verificarHorarioOTA();
 
      Serial.println("\nLoop inciado! "); // imprime mensagem na porta serial
 
@@ -239,9 +240,9 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
 if(ledaux < 3)
 {  
 Serial.end();
-  pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+  pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
      // Liga o LED
-  digitalWrite(ledPin, LOW);
+  digitalWrite(pinoLedInterno, LOW);
 }
 
   while (cont == 1)  // loop enquanto não há movimento da catraca posição 1 (1 quarto de giro para frente)
@@ -546,11 +547,11 @@ Serial.end();
 
 
     // Serial.end();
-  //pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+  //pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
         // Liga o LED
-  //digitalWrite(ledPin, LOW);
+  //digitalWrite(pinoLedInterno, LOW);
   //delay(400); 
-  //digitalWrite(ledPin, HIGH);
+  //digitalWrite(pinoLedInterno, HIGH);
 //delay(400);
 //Serial.begin(115200);// inicia comunicação serial
     //delay(100);
@@ -558,7 +559,7 @@ Serial.end();
 if(ledaux < 3)
 {
   ledaux = ledaux + 1;
- digitalWrite(ledPin, HIGH);
+ digitalWrite(pinoLedInterno, HIGH);
 Serial.begin(115200);// inicia comunicação serial
 }
 
@@ -882,11 +883,11 @@ if (tipoEntr == 1)
 
       direcao = 2;
    //Serial.end();
-  //pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+  //pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
         // Liga o LED
-  //digitalWrite(ledPin, LOW);
+  //digitalWrite(pinoLedInterno, LOW);
   //delay(400); 
-  //digitalWrite(ledPin, HIGH);
+  //digitalWrite(pinoLedInterno, HIGH);
 //delay(400);
 //Serial.begin(115200);// inicia comunicação serial
     //delay(100);
@@ -894,7 +895,7 @@ if (tipoEntr == 1)
 if(ledaux < 3)
 {
   ledaux = ledaux + 1;
-   digitalWrite(ledPin, HIGH);
+   digitalWrite(pinoLedInterno, HIGH);
 Serial.begin(115200);// inicia comunicação serial
 }
 
@@ -931,11 +932,11 @@ Serial.begin(115200);// inicia comunicação serial
   
   
  //Serial.end();
- //pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+ //pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
         // Liga o LED
- // digitalWrite(ledPin, LOW);
+ // digitalWrite(pinoLedInterno, LOW);
   //delay(400); 
- // digitalWrite(ledPin, HIGH);
+ // digitalWrite(pinoLedInterno, HIGH);
 //delay(400);
 //Serial.begin(115200);// inicia comunicação serial
     //delay(100);
@@ -943,7 +944,7 @@ Serial.begin(115200);// inicia comunicação serial
 if(ledaux < 3)
 {
   ledaux = ledaux + 1;
- digitalWrite(ledPin, HIGH);
+ digitalWrite(pinoLedInterno, HIGH);
 Serial.begin(115200);// inicia comunicação serial
 }
 
@@ -1030,9 +1031,9 @@ Serial.begin(115200);// inicia comunicação serial
   if(ledaux < 3)
 {  
 Serial.end();
-  pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+  pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
      // Liga o LED
-  digitalWrite(ledPin, LOW);
+  digitalWrite(pinoLedInterno, LOW);
 }
 
   while (cont == 1)  // loop enquanto não há movimento da catraca posição 1 (1 quarto de giro para frente)
@@ -1068,11 +1069,11 @@ Serial.end();
 
      direcao = 1;
     // Serial.end();
-  //pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+  //pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
         // Liga o LED
- // digitalWrite(ledPin, LOW);
+ // digitalWrite(pinoLedInterno, LOW);
  // delay(400); 
-  //digitalWrite(ledPin, HIGH);
+  //digitalWrite(pinoLedInterno, HIGH);
 //delay(400);
 //Serial.begin(115200);// inicia comunicação serial
    // delay(100);
@@ -1080,7 +1081,7 @@ Serial.end();
 if(ledaux < 3)
 {
   ledaux =  ledaux + 1;
- digitalWrite(ledPin, HIGH);
+ digitalWrite(pinoLedInterno, HIGH);
 Serial.begin(115200);// inicia comunicação serial
 }
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
@@ -1144,11 +1145,11 @@ Serial.begin(115200);// inicia comunicação serial
   direcao = 2;
 
  //Serial.end();
- // pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+ // pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
         // Liga o LED
- // digitalWrite(ledPin, LOW);
+ // digitalWrite(pinoLedInterno, LOW);
  // delay(400); 
- // digitalWrite(ledPin, HIGH);
+ // digitalWrite(pinoLedInterno, HIGH);
 //delay(400);
 //Serial.begin(115200);// inicia comunicação serial
    // delay(100);
@@ -1156,7 +1157,7 @@ Serial.begin(115200);// inicia comunicação serial
 if(ledaux < 3)
 {
   ledaux =  ledaux + 1;
- digitalWrite(ledPin, HIGH);
+ digitalWrite(pinoLedInterno, HIGH);
 Serial.begin(115200);// inicia comunicação serial
 }
 
@@ -1192,11 +1193,11 @@ Serial.begin(115200);// inicia comunicação serial
 
 
    //Serial.end();
-  //pinMode(ledPin, OUTPUT); // define pino do led interno como saída
+  //pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
         // Liga o LED
-  //digitalWrite(ledPin, LOW);
+  //digitalWrite(pinoLedInterno, LOW);
   //delay(400); 
-  //digitalWrite(ledPin, HIGH);
+  //digitalWrite(pinoLedInterno, HIGH);
 //delay(400);
 //Serial.begin(115200);// inicia comunicação serial
     //delay(100);
@@ -1204,7 +1205,7 @@ Serial.begin(115200);// inicia comunicação serial
 if(ledaux < 3)
 {
    ledaux =  ledaux + 1;
-     digitalWrite(ledPin, HIGH);
+     digitalWrite(pinoLedInterno, HIGH);
 Serial.begin(115200);// inicia comunicação serial
 }
 
@@ -1244,5 +1245,7 @@ Serial.begin(115200);// inicia comunicação serial
 delay(25);
 preferences.end();
 esp_task_wdt_reset(); //Reseta o temporizador do watchdog
+
+  verificarHorarioOTA(); //Verifica que horas são para Atualização do Sistema
 
 }    // fim void loop()

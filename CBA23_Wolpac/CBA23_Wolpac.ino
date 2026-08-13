@@ -17,12 +17,12 @@
 //VARIÁVEIS EDITÁVEIS: seus valores devem ser editados manualmente para cada contador conforme sua id, estação, etc
 int  numid = 4 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
-int teste = 1;  // (0 para funcionamento definitivo, vai funcionar conforme modelo habilitado fisicamente pelos pinos , 1 - para testes, vai ignorar a definição dos pinos e usar o modelo definido na váriavel abaixo
+int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme modelo habilitado fisicamente pelos pinos , 1 - para testes, vai ignorar a definição dos pinos e usar o modelo definido na váriavel abaixo
 int modelo = 1; // modelo de bloqueio: 1 - Foca , garem ou wolpac,  2 - Ascom/Monetel, 0 - indefinido
 const char *nomeota = "Wolpac-ID04"; // define nome que vai aparecer na IDE do arduino ao tentar programar via OTA  // "Monetel-ID01" "Foca-ID02" "Garen-ID03"  "Wolpac-ID04"
 //dados para conectar ao wi-fi (estação, final):
-const char* ssid = "WIFI-ARHD"; // Substitua por seu SSID
-const char* password = "mfr-09720"; // Substitua por sua senha Wi-Fi
+const char* ssid = "POC_MANUTENCAO"; // Substitua por seu SSID
+const char* password = "joVzu79RgOx8@"; // Substitua por sua senha Wi-Fi
 const char* host = "wsserver02-prod.metro.gdfnet.df"; // Substitua pelo endereço do Web Service
 const int port = 9668; // Substitua pela porta do Web Service (geralmente 80 ou 443)
 
@@ -68,7 +68,7 @@ const char* passwordOTA = "mfr-09720"; // Substitua por sua senha Wi-Fi
 
 
 //Watchdog timer
-#define WDT_TIMEOUT 50000 // 1000mS = 1 second... -> Change to your requirement.
+#define WDT_TIMEOUT 120000 // 1000mS = 1 second... -> Change to your requirement.
 #define CONFIG_FREERTOS_NUMBER_OF_CORES 1 
 // Fixes complier error “invalid conversion from ‘int’ to ‘const esp_task_wdt_config_t*'”:
 esp_task_wdt_config_t twdt_config = 
@@ -328,6 +328,15 @@ else
 }
 
 
+// ---> INÍCIO DA ATUALIZAÇÃO DA ORDEM DO WI-FI <---
+  Serial.println("\nConectando à rede Wi-Fi...");
+  setupOTA(); // Liga o Wi-Fi e prepara o OTA Local
+  
+  // Liga o servidor de hora para o OTA do GitHub
+  inicializarNTP(); 
+// ---> FIM DA ATUALIZAÇÃO <---
+ delay(100);
+
   i=0;     // zera variavel auxiliar i
 
   do     // chama função tempo varias vezes
@@ -374,14 +383,7 @@ delay(500);
 
 
 
-  // ---> INÍCIO DA ATUALIZAÇÃO DA ORDEM DO WI-FI <---
-  Serial.println("\nConectando à rede Wi-Fi...");
-  setupOTA(); // Liga o Wi-Fi e prepara o OTA Local
   
-  // Liga o servidor de hora para o OTA do GitHub
-  inicializarNTP(); 
-// ---> FIM DA ATUALIZAÇÃO <---
- delay(100);
 } // fim void setup()
 
  

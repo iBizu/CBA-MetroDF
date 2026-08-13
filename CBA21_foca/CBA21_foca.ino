@@ -21,9 +21,10 @@ int teste = 0;  // (0 para funcionamento definitivo, vai funcionar conforme mode
 int modelo = 2; // modelo de bloqueio: 1 - Foca , garem ou wolpac,  2 - Ascom/Monetel, 0 - indefinido
 const char *nomeota = "Monetel-ID01"; // define nome que vai aparecer na IDE do arduino ao tentar programar via OTA  // "Monetel-ID01" "Foca-ID02" "Garen-ID03"
 
-//dados para conectar ao wi-fi (estação, final):
-const char* ssid = "POC_MANUTENCAO"; // Substitua por seu SSID
-const char* password = "joVzu79RgOx8@"; // Substitua por sua senha Wi-Fi
+
+//dados para conectar ao wi-fi (escola metroviaria, final):
+const char* ssid = "WIFI-ARHD"; // Substitua por seu SSID
+const char* password = "mfr-09720"; // Substitua por sua senha Wi-Fi
 const char* host = "wsserver02-prod.metro.gdfnet.df"; // Substitua pelo endereço do Web Service
 const int port = 9668; // Substitua pela porta do Web Service (geralmente 80 ou 443)
 
@@ -296,7 +297,7 @@ else
 
   pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
 
-for (k = 0; k < 3; k++)
+for (k = 0; k < 5; k++)
 {
        // Liga o LED
  digitalWrite(pinoLedInterno, HIGH);

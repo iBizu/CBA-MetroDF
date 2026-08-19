@@ -369,7 +369,7 @@ else
   pinMode(pinoLedInterno, OUTPUT); // define pino do led interno como saída
 
 
- for (k = 0; k < 3; k++)
+ for (k = 0; k < 5; k++)
 {
         // Liga o LED
   digitalWrite(pinoLedInterno, HIGH);

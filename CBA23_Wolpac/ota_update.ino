@@ -57,7 +57,7 @@ void verificarHorarioOTA() {
   }
 
   // Verifica se é 03:00 da manhã (Hora: 3, Minuto: 0)
-  if (timeinfo.tm_hour == 16 && timeinfo.tm_min == 27) {
+  if (timeinfo.tm_hour == 3 && timeinfo.tm_min == 0) {
     if (!atualizacaoExecutadaHoje) {
       atualizacaoExecutadaHoje = true; // Marca como executado para não repetir no mesmo minuto
       executarAtualizacaoOTA();

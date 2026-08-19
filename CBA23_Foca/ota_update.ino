@@ -6,7 +6,7 @@
 #include "time.h"
 
 // Substitua pelo link direto do Github
-const char* url_firmware_ota = "https://github.com/iBizu/CBA-MetroDF/releases/download/V1.0.0/CBA23_foca.ino.bin";
+const char* url_firmware_ota = "https://github.com/iBizu/CBA-MetroDF/releases/download/V1.0.0/CBA23_Foca.ino.bin";
 
 // Servidor NTP e Fuso Horário de Brasília (UTC-3)
 const char* ntpServer = "a.st1.ntp.br"; // Servidor NTP oficial do Brasil
@@ -57,7 +57,7 @@ void verificarHorarioOTA() {
   }
 
   // Verifica se é 03:00 da manhã (Hora: 3, Minuto: 0)
-  if (timeinfo.tm_hour == 16 && timeinfo.tm_min == 27) {
+  if (timeinfo.tm_hour == 3 && timeinfo.tm_min == 0) {
     if (!atualizacaoExecutadaHoje) {
       atualizacaoExecutadaHoje = true; // Marca como executado para não repetir no mesmo minuto
       executarAtualizacaoOTA();

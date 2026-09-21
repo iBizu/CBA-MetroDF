@@ -14,3 +14,6 @@ backup/
 
 # Binários gerados para as releases (release/estacao e release/lab): vão como assets da release, não para o repositório
 release/
+
+# versao.txt da raiz é o arquivo de upload manual; o gerado fica em release/<canal>/versao.txt
+/versao.txt

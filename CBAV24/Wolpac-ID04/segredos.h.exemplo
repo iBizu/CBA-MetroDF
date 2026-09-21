@@ -1,0 +1,21 @@
+// Segredos desta instalação: SSIDs, senhas de Wi-Fi e token do Telegram.
+// Este arquivo NÃO vai para o git (está no .gitignore). Ao clonar o repositório, copie
+// segredos.h.exemplo para segredos.h nesta mesma pasta e preencha os valores.
+// O sketch principal faz #include "segredos.h" e usa estes macros no bloco de VARIÁVEIS EDITÁVEIS.
+#pragma once
+
+// Wi-Fi do laboratório (usado com AMBIENTE_LAB 1)
+#define WIFI_LAB_SSID      "SSID_DO_LABORATORIO"
+#define WIFI_LAB_SENHA     "SENHA_DO_LABORATORIO"
+
+// Wi-Fi da estação (usado com AMBIENTE_LAB 0)
+#define WIFI_ESTACAO_SSID  "SSID_DA_ESTACAO"
+#define WIFI_ESTACAO_SENHA "SENHA_DA_ESTACAO"
+
+// Rede usada quando o jumper de OTA (pinos 0 e 4) está fechado no boot, para programar pela IDE via Wi-Fi
+#define WIFI_OTA_SSID      "SSID_DA_REDE_DE_PROGRAMACAO"
+#define WIFI_OTA_SENHA     "SENHA_DA_REDE_DE_PROGRAMACAO"
+
+// Bot do Telegram (token do @BotFather) e id do grupo de monitoramento
+#define TELEGRAM_TOKEN     "123456789:TOKEN_DO_BOTFATHER"
+#define TELEGRAM_CHAT      "-100000000000"

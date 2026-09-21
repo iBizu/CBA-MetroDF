@@ -1,0 +1,13 @@
+# Segredos (SSIDs, senhas de Wi-Fi, token do Telegram).
+# Em cada pasta de sketch: copie segredos.h.exemplo para segredos.h e preencha.
+**/segredos.h
+
+# Saídas de compilação da IDE (Sketch > Export Compiled Binary) e do arduino-cli.
+# O .bin de cada variante vai para a release do GitHub, não para o repositório.
+**/build/
+
+# Arquivos de estado da IDE
+**/.theia/
+
+# Cópias de segurança locais feitas antes das mudanças de 2026-09 (o histórico do git já guarda as versões antigas)
+backup/

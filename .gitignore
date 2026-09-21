@@ -11,3 +11,6 @@
 
 # Cópias de segurança locais feitas antes das mudanças de 2026-09 (o histórico do git já guarda as versões antigas)
 backup/
+
+# Binários gerados para as releases (release/estacao e release/lab): vão como assets da release, não para o repositório
+release/

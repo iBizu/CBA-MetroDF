@@ -21,14 +21,20 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "1"
+#define FW_VERSION "3"
 #define OTA_ASSET  "Monetel_ID01.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
-// 1 = bancada/laboratório: Wi-Fi do laboratório, servidor de teste, OTA e resumo do Telegram a cada poucos minutos
-// 0 = estação:             POC_MANUTENCAO, servidor de produção, OTA às 03:00 e resumo no fechamento
+// 1 = bancada/laboratório: Wi-Fi do laboratório, servidor de teste, OTA e resumo do Telegram a cada poucos minutos,
+//     atualizações vindas da release de tag "lab" no GitHub
+// 0 = estação:             POC_MANUTENCAO, servidor de produção, OTA às 03:00 e resumo no fechamento,
+//     atualizações vindas da release "latest" no GitHub
 // A placa informa no Telegram, a cada boot, em qual ambiente acha que está.
+// O valor abaixo é o padrão para quem compila pela IDE. O arduino-cli pode sobrepor sem editar o arquivo:
+//   --build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"   (é assim que os binários de release da estação são gerados)
+#ifndef AMBIENTE_LAB
 #define AMBIENTE_LAB 1
+#endif
 
 int  numid = 1 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
@@ -64,9 +70,17 @@ const char *nomeota = "Monetel-ID01"; // define nome que vai aparecer na IDE do 
 const char* TG_TOKEN = TELEGRAM_TOKEN;
 const char* TG_CHAT  = TELEGRAM_CHAT;
 
-// ---- GitHub: release marcada como "latest" (cada versão nova = release nova, com os 4 .bin + versao.txt) ----
-const char* url_versao_txt   = "https://github.com/iBizu/CBA-MetroDF/releases/latest/download/versao.txt";
-const char* url_firmware_ota = "https://github.com/iBizu/CBA-MetroDF/releases/latest/download/" OTA_ASSET;
+// ---- GitHub: de onde vêm as atualizações (cada release tem os 4 .bin + versao.txt) ----
+// Estação: release marcada como "latest" (cada versão nova = release nova, tag = versão).
+// Laboratório: release de tag fixa "lab", marcada como PRE-RELEASE no GitHub — pre-release nunca vira
+// "latest", então um binário de teste da bancada nunca chega às placas da estação, e vice-versa.
+#if AMBIENTE_LAB
+  #define OTA_URL_BASE "https://github.com/iBizu/CBA-MetroDF/releases/download/lab/"
+#else
+  #define OTA_URL_BASE "https://github.com/iBizu/CBA-MetroDF/releases/latest/download/"
+#endif
+const char* url_versao_txt   = OTA_URL_BASE "versao.txt";
+const char* url_firmware_ota = OTA_URL_BASE OTA_ASSET;
 
 
 // programação OTA (via wifi)

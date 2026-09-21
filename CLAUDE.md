@@ -27,7 +27,16 @@ Serial upload: use `upload -p COMx` in place of `compile`. Network (ArduinoOTA) 
 
 The sketch uses ~88% of the 1.25 MB app slot. Do not switch to a larger single-app partition scheme — the GitHub OTA path needs the two OTA slots of the default scheme.
 
-`build/esp32.esp32.esp32/` folders hold IDE "Export Compiled Binary" outputs (mostly stale, named after an older `CBA23_Wolpac` project). The `.bin` exported there is what gets attached to a GitHub release for OTA.
+### Releases (OTA channels)
+
+Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
+
+| channel | boards | GitHub release | URL base in firmware |
+|---|---|---|---|
+| **estação** | `AMBIENTE_LAB 0` | new release per version, tag = version (e.g. `3`), marked **latest** | `releases/latest/download/` |
+| **lab** | `AMBIENTE_LAB 1` | fixed tag `lab`, marked **pre-release** (never becomes `latest`); replace its assets to push a bench test | `releases/download/lab/` |
+
+Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `FW_VERSION` of those binaries). `./gerar_release.sh [estacao|lab|ambos]` (Git Bash, repo root) builds everything into `release/estacao/` and `release/lab/` — station binaries are built with `--build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"`, so the committed source keeps the lab default (`#ifndef AMBIENTE_LAB`). Upload the folder's contents as the release assets; `release/` and `build/` are gitignored. Bump `FW_VERSION` in all four sketches before building, and keep it identical across them (the script refuses otherwise). `Sketch > Export Compiled Binary` in the IDE also works (writes `<Variant>/build/esp32.esp32.esp32/<Variant>.ino.bin`), but only for whatever `AMBIENTE_LAB` the source currently says.
 
 ## Four variants, one codebase
 
@@ -35,9 +44,9 @@ The sketch uses ~88% of the 1.25 MB app slot. Do not switch to a larger single-a
 
 | var | meaning |
 |---|---|
-| `FW_VERSION` | this build's version (plain integers so far: `"1"`, `"2"`). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
+| `FW_VERSION` | this build's version (plain integers: `"3"` as of 2026-09-21). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
-| `AMBIENTE_LAB` | `1` lab (`WIFI-ARHD`, test host `10.66.24.196`, OTA check every `OTA_INTERVALO_MIN`, Telegram summary every `RESUMO_INTERVALO_MIN`); `0` station (`POC_MANUTENCAO`, `wsserver02-prod…`, OTA at `OTA_HORA:OTA_MINUTO` = 03:00, summary at `RESUMO_HORA:RESUMO_MINUTO` = 23:45; the station closes 23:30). Flip to `0` before flashing a board for the station |
+| `AMBIENTE_LAB` | `1` lab (`WIFI-ARHD`, test host `10.66.24.196`, OTA from the `lab` release every `OTA_INTERVALO_MIN`, Telegram summary every `RESUMO_INTERVALO_MIN`); `0` station (`POC_MANUTENCAO`, `wsserver02-prod…`, OTA from `latest` at `OTA_HORA:OTA_MINUTO` = 03:00, summary at `RESUMO_HORA:RESUMO_MINUTO` = 23:45; the station closes 23:30). Guarded by `#ifndef` so `-DAMBIENTE_LAB=0` on the command line overrides it; from the IDE, edit the define |
 | `numid` | device id sent in every message (1–4) |
 | `tipoEntr` | sensor electrical type: `1` analog voltage divider (Garen, Wolpac), `2` digital/Zener (Foca). Ignored for Monetel |
 | `modelo` | turnstile mechanics: `1` = 4 quarter-turns per passage (Foca/Garen/Wolpac), `2` = 2 half-turns (Ascom/Monetel). Only honored when `teste = 1`; otherwise auto-detected from hardware jumpers at boot |
@@ -49,7 +58,7 @@ The sketch uses ~88% of the 1.25 MB app slot. Do not switch to a larger single-a
 
 ### Features (all four variants, since 2026-09-21)
 
-- **OTA** (`ota_update.ino`): downloads `releases/latest/download/<OTA_ASSET>` only when `versao.txt` from the same release is numerically **greater** than `FW_VERSION` — never a downgrade. Checked at boot (`OTA_CHECAR_NO_BOOT`) and on the schedule. `onProgress` feeds the WDT during the download. Telegram gets "baixando"/"FALHA" once per cloud version; success is announced by the next boot message.
+- **OTA** (`ota_update.ino`): downloads `<OTA_URL_BASE><OTA_ASSET>` (channel per `AMBIENTE_LAB`, see Releases) only when `versao.txt` from the same release is numerically **greater** than `FW_VERSION` — never a downgrade. Checked at boot (`OTA_CHECAR_NO_BOOT`) and on the schedule. `onProgress` feeds the WDT during the download. Telegram gets "baixando"/"FALHA" once per cloud version; success is announced by the next boot message.
 - **Rollback**: `rollback_hook.cpp` (`verifyRollbackLater()` → true) + `verificarEstadoOTA()` early in `setup()` confirm the image only after NVS/WDT init. A version that crashes before that rolls back and is stored in NVS `ota/rejeitada`; a downloaded binary whose own `FW_VERSION` differs from what `versao.txt` promised is also blocked (otherwise the board would re-flash it forever).
 - **Clock**: no NTP. `configurarFuso()` only sets TZ (`<-03>3`); the web service is the single time source (verified: it sends UTC epoch). `tempo()` returns `bool`; `sincronizarRelogio()` keeps counting offline if the RTC is already valid (it survives `ESP.restart()`/WDT), and only reboots when the clock was never set.
 - **Telegram** (`telegram.ino`): `enviarTelegram()` (JSON POST, 10 s handshake timeout) sends now; `agendarTelegram()` queues for the idle loop (`enviarTelegramPendente()`, ≤1 try/min). Boot message: reset reason / `ATUALIZADO x -> y` / `ROLLBACK`, environment, `JUMPER OTA` flag, Wi-Fi, clock, SD state. `resumo.ino`: periodic summary (deltas vs. NVS `resumo/E,S,W`, pending lines in `LOGREG.csv`), queued if Wi-Fi is down. `falhou()` queues one SD-failure alert per boot.

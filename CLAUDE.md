@@ -52,7 +52,7 @@ Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `
 
 | var | meaning |
 |---|---|
-| `FW_VERSION` | this build's version (plain integers: `"3"` as of 2026-09-21). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
+| `FW_VERSION` | this build's version (plain integers: `"4"` as of 2026-09-22). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
 | `AMBIENTE_LAB` | `1` lab (`WIFI-ARHD`, test host `10.66.24.196`, OTA from the `lab` release every `OTA_INTERVALO_MIN`, Telegram summary every `RESUMO_INTERVALO_MIN`); `0` station (`POC_MANUTENCAO`, `wsserver02-prod…`, OTA from `latest` at `OTA_HORA:OTA_MINUTO` = 03:00, summary at `RESUMO_HORA:RESUMO_MINUTO` = 23:45; the station closes 23:30). Guarded by `#ifndef` so `-DAMBIENTE_LAB=0` on the command line overrides it; from the IDE, edit the define |
 | `numid` | device id sent in every message (1–4) |

@@ -114,44 +114,66 @@ bool versaoValida(const String& v)
   return true;
 }
 
-// Lê o versao.txt da release "latest". Retorna true se leu uma versão válida.
+// Lê o versao.txt do canal (ver OTA_URL_BASE). Retorna true se leu uma versão válida.
+//
+// Prazos generosos de propósito: o caminho da placa é bem mais pesado que o de um PC — são DOIS
+// handshakes TLS em sequência (github.com e, depois do redirecionamento 302, o CDN que serve o
+// arquivo), num ESP32 e muitas vezes com sinal fraco. Com 8 s isto dava HTTP -11 (READ_TIMEOUT)
+// na bancada. Duas tentativas cobrem a falha ocasional sem prender o loop por muito tempo:
+// a catraca não é lida enquanto esta função roda.
 bool lerVersaoNuvem(String& versaoNuvem)
 {
-  esp_task_wdt_reset(); //Reseta o temporizador do watchdog
-  WiFiClientSecure client;
-  client.setInsecure();
-  client.setHandshakeTimeout(10);   // segundos
-  client.setTimeout(8000);          // ms
+  const int TENTATIVAS = 2;
+  int codigo = 0;
 
-  HTTPClient http;
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);   // o asset da release redireciona (302) para o CDN do GitHub
-  http.setConnectTimeout(5000);
-  http.setTimeout(8000);
-  if (!http.begin(client, url_versao_txt))
+  for (int tentativa = 1; tentativa <= TENTATIVAS; tentativa++)
   {
-    Serial.println("[OTA] http.begin falhou para versao.txt");
-    return false;
-  }
-  int codigo = http.GET();
-  bool ok = false;
-  if (codigo == HTTP_CODE_OK)
-  {
-    versaoNuvem = http.getString();
-    versaoNuvem.trim();
-    ok = versaoValida(versaoNuvem);
-    if (!ok)
+    esp_task_wdt_reset(); //Reseta o temporizador do watchdog
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setHandshakeTimeout(20);   // segundos
+    client.setTimeout(15000);         // ms
+
+    HTTPClient http;
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);   // o asset da release redireciona (302) para o CDN do GitHub
+    http.setConnectTimeout(10000);
+    http.setTimeout(15000);
+    if (!http.begin(client, url_versao_txt))
     {
+      Serial.println("[OTA] http.begin falhou para versao.txt");
+      return false;
+    }
+
+    codigo = http.GET();
+    if (codigo == HTTP_CODE_OK)
+    {
+      versaoNuvem = http.getString();
+      versaoNuvem.trim();
+      http.end();
+      esp_task_wdt_reset(); //Reseta o temporizador do watchdog
+      if (versaoValida(versaoNuvem))
+      {
+        return true;
+      }
       Serial.println("[OTA] versao.txt com conteudo invalido: " + versaoNuvem.substring(0, 40));
+      return false;   // o arquivo existe mas está errado: repetir não adianta
+    }
+
+    http.end();
+    esp_task_wdt_reset(); //Reseta o temporizador do watchdog
+    Serial.println("[OTA] Tentativa " + String(tentativa) + "/" + String(TENTATIVAS)
+                 + " falhou ao ler versao.txt. HTTP " + String(codigo) + " (" + descricaoErroHttp(codigo) + ")"
+                 + " | heap livre: " + String(ESP.getFreeHeap() / 1024) + " KB | RSSI: " + String(WiFi.RSSI()) + " dBm");
+    if (tentativa < TENTATIVAS)
+    {
+      delay(1000);
     }
   }
-  else
-  {
-    Serial.println("[OTA] Falha ao ler versao.txt. HTTP " + String(codigo) + " (" + descricaoErroHttp(codigo) + ")");
-    Serial.println("[OTA] URL consultada: " + String(url_versao_txt));
-  }
-  http.end();
-  esp_task_wdt_reset(); //Reseta o temporizador do watchdog
-  return ok;
+
+  Serial.println("[OTA] Desisti de ler o versao.txt nesta verificacao.");
+  Serial.println("[OTA] URL consultada: " + String(url_versao_txt));
+  return false;
 }
 
 // Verifica e, se houver versão mais nova, baixa e grava. Se der certo a placa reinicia aqui dentro.
@@ -211,8 +233,8 @@ void executarAtualizacaoOTA(const char* origem)
 
   WiFiClientSecure client;
   client.setInsecure();
-  client.setHandshakeTimeout(15);   // segundos
-  client.setTimeout(20000);         // ms
+  client.setHandshakeTimeout(25);   // segundos (dois handshakes TLS: github.com e o CDN do redirecionamento)
+  client.setTimeout(30000);         // ms (o .bin tem ~1,2 MB; sinal fraco deixa o download lento)
 
   httpUpdate.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   httpUpdate.rebootOnUpdate(true);

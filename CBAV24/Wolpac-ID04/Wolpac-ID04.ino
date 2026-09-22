@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "3"
+#define FW_VERSION "4"
 #define OTA_ASSET  "Wolpac-ID04.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -46,12 +46,13 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 // ADC não virar contagem falsa. Se as duas leituras caírem do mesmo lado, a placa entende que os
 // dois sensores estão acionados (combinação mecanicamente impossível) e para de contar.
 // Para medir os valores da sua bancada, ponha DEBUG_ADC em 1 abaixo e leia a serial.
-// Wolpac: valores validados em bancada (indicados pelo colega que calibrou a placa).
-// A tensao que chega ao pino e menor que nas outras variantes por causa do resistor da placa,
-// por isso os limiares sao bem mais baixos. A faixa morta aqui e estreita (150..200), entao
-// confirme com DEBUG_ADC se a leitura oscilar e, se precisar, afaste os dois valores.
-#define ADC_ACIONADO 150
-#define ADC_REPOUSO  200
+// Wolpac: validado em bancada em 22/09/2026, contando corretamente com estes valores.
+// A placa do Wolpac tem um resistor que reduz a tensao no pino: em repouso chegam ~0,70 V
+// (cerca de 869 contagens) e, com o sensor acionado, ~0,37 V (cerca de 459). Os limiares
+// ficam entre os dois, com folga dos dois lados para o ruido do ADC.
+// (Valores de 150/200 chegaram a ser testados e NAO funcionaram nesta placa.)
+#define ADC_ACIONADO 600
+#define ADC_REPOUSO  730
 
 // 1 = modo calibração: a placa NÃO conta, só imprime as leituras dos sensores na serial (115200).
 #define DEBUG_ADC 0

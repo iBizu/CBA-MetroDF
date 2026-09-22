@@ -3,6 +3,27 @@
 void loop()
 {   
 
+#if DEBUG_ADC
+  // ---- Modo calibracao (DEBUG_ADC = 1 no sketch principal) ----
+  // A placa NAO conta e NAO envia nada: so mostra o que os sensores estao lendo.
+  // Gire a catraca devagar, anote o valor de cada sensor em repouso e com ele acionado,
+  // ponha esses numeros em ADC_REPOUSO / ADC_ACIONADO, volte DEBUG_ADC para 0 e regrave.
+  Serial.println("
+== MODO CALIBRACAO (DEBUG_ADC = 1): a placa nao esta contando ==");
+  Serial.println("   limiares atuais: acionado < " + String(ADC_ACIONADO) + " | repouso > " + String(ADC_REPOUSO));
+  while (true)
+  {
+    esp_task_wdt_reset(); //Reseta o temporizador do watchdog
+    Serial.println("analogico  GPIO" + String(PIN_BTN5) + "=" + String(analogRead(PIN_BTN5))
+                 + "  GPIO" + String(PIN_BTN6) + "=" + String(analogRead(PIN_BTN6))
+                 + "   |  digital  GPIO" + String(PIN_BTN1) + "=" + String(digitalRead(PIN_BTN1))
+                 + " GPIO" + String(PIN_BTN2) + "=" + String(digitalRead(PIN_BTN2))
+                 + " GPIO" + String(PIN_BTN3) + "=" + String(digitalRead(PIN_BTN3))
+                 + " GPIO" + String(PIN_BTN4) + "=" + String(digitalRead(PIN_BTN4)));
+    delay(500);
+  }
+#endif
+
 
      Serial.println("\nLoop inciado! "); // imprime mensagem na porta serial
 
@@ -147,19 +168,19 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
 
-       if( valor1 > 450 && valor2  > 450) // verifica entradas analogicas
+       if( valor1 > ADC_REPOUSO && valor2  > ADC_REPOUSO) // verifica entradas analogicas
     {
       cont = 0;   // mantém ponto inicial
     }
 
-      if( valor1 < 300 && valor2  > 450) // verifica entradas analogicas
+      if( valor1 < ADC_ACIONADO && valor2  > ADC_REPOUSO) // verifica entradas analogicas
     {
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
        goto cont1a ;
       
     }
- if( valor1> 450 && valor2  < 300) // verifica entradas analogicas
+ if( valor1> ADC_REPOUSO && valor2  < ADC_ACIONADO) // verifica entradas analogicas
     {
       cont--;  // um quarto de giro para trás
       delay(25); // delay se mudou de estado
@@ -167,12 +188,12 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
     }
 
     
-    if( valor1 < 300 && valor2 < 300)
+    if( valor1 < ADC_ACIONADO && valor2 < ADC_ACIONADO)
     {
       delay(10);  //aguarda para verificar se é erro
       valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
       valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
-      if( valor1 < 300 && valor2 < 300)
+      if( valor1 < ADC_ACIONADO && valor2 < ADC_ACIONADO)
     {
       if(direcao == 0 || direcao == 1)
       {
@@ -275,30 +296,30 @@ Serial.end();
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
 
-      if( valor1 < 300 && valor2  > 450) // verifica entradas analogicas
+      if( valor1 < ADC_ACIONADO && valor2  > ADC_REPOUSO) // verifica entradas analogicas
     {
       cont = 1;   // mantém ponto inicial
     }
-    if(valor1 < 300  &&   valor2 < 300 )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
       goto cont2a ;
     }  
                    
-    if(valor1 > 450 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
       delay(25); // delay se mudou de estado
       goto cont0a ;
     }      
 
-    if(valor1 > 450 &&   valor2 < 300 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       delay(10); // delay para verificar possivel erro
       valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
       valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
-      if(valor1 > 450 &&   valor2 < 300 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+      if(valor1 > ADC_REPOUSO &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       if(direcao == 0 || direcao == 1)
       {
@@ -392,30 +413,30 @@ cont2a:
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
 
     
-      if(valor1 < 300  &&   valor2 < 300) // verifica entradas analogicas
+      if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO) // verifica entradas analogicas
     {
       cont = 2;   // mantém ponto inicial
     }
-    if(valor1 > 450  &&   valor2 < 300 )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(valor1 > ADC_REPOUSO  &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
       goto cont3a ;
     }  
                    
-    if(valor1 < 300  &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 < ADC_ACIONADO  &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
       delay(25); // delay se mudou de estado
        goto cont1a ;
     }      
 
-    if(valor1 > 450 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       delay(10); // aguarda para verificar se é erro
       valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
       valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
-      if(valor1 > 450 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+      if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       if(direcao == 0 || direcao == 1)
       {
@@ -505,30 +526,30 @@ cont2a:
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
 
-     if( valor1 > 450 && valor2 < 300 ) // verifica entradas analogicas
+     if( valor1 > ADC_REPOUSO && valor2 < ADC_ACIONADO ) // verifica entradas analogicas
     {
       cont = 3;   // mantém ponto inicial
     }
-    if(valor1 > 450  &&   valor2 > 450 )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(valor1 > ADC_REPOUSO  &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
       goto cont4a ;
     }  
                    
-    if(valor1 < 300  &&   valor2 < 300  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
       delay(25); // delay se mudou de estado
       goto cont2a ;
     }      
 
-    if(valor1 < 300 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 < ADC_ACIONADO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       delay(10); // aguarda par ver se é algum erro
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
      valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
-      if(valor1 < 300 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+      if(valor1 < ADC_ACIONADO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
        if(direcao == 0 || direcao == 1)
       {
@@ -675,30 +696,30 @@ if (tipoEntr == 1)
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
 
-    if( valor1 > 450 && valor2  < 300) // verifica entradas analogicas
+    if( valor1 > ADC_REPOUSO && valor2  < ADC_ACIONADO) // verifica entradas analogicas
     {
       cont = -1;   // mantém ponto inicial
     }
-    if(valor1 > 450  &&   valor2 > 450 )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(valor1 > ADC_REPOUSO  &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
       goto cont0a ;    
     }  
                    
-    if(valor1 < 300  &&   valor2 < 300  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
       delay(25); // delay se mudou de estado
       goto cont2b ;
     }      
 
-    if(valor1 < 300 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 < ADC_ACIONADO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       delay(10); // aguardar apra verificar possível erro
       valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
        valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
-        if(valor1 < 300 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+        if(valor1 < ADC_ACIONADO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       if(direcao == 0 || direcao == 1)
       {
@@ -786,30 +807,30 @@ if (tipoEntr == 1)
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
 
-     if( valor1 < 300 && valor2  < 300) // verifica entradas analogicas
+     if( valor1 < ADC_ACIONADO && valor2  < ADC_ACIONADO) // verifica entradas analogicas
     {
       cont = -2;   // mantém ponto inicial
     }
-    if(valor1 > 450  &&   valor2 < 300 )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(valor1 > ADC_REPOUSO  &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
        goto cont1b ;
     }  
                    
-    if(valor1 < 300  &&   valor2 > 450  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 < ADC_ACIONADO  &&   valor2 > ADC_REPOUSO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
       delay(25); // delay se mudou de estado
        goto cont3b ;
     }      
 
-    if(valor1 > 450 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       delay(10);  // aguarda para verificar possivel erro
       valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica) 
-    if(valor1 > 450 &&   valor2 > 450 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     {
         if(direcao == 0 || direcao == 1)
       {
@@ -896,30 +917,30 @@ if (tipoEntr == 1)
     valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
     valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
 
-    if( valor1 < 300 && valor2  > 450) // verifica entradas analogicas
+    if( valor1 < ADC_ACIONADO && valor2  > ADC_REPOUSO) // verifica entradas analogicas
     {
       cont = -3;   // mantém ponto inicial
     }
-    if(valor1 < 300   &&   valor2 < 300 )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(valor1 < ADC_ACIONADO   &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
       delay(25); // delay se mudou de estado
        goto cont2b ;
     }  
                    
-    if(valor1 > 450 &&   valor2 > 450  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
       delay(25); // delay se mudou de estado
        goto cont4b ;
     }      
 
-    if(valor1 > 450 &&   valor2 < 300 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+    if(valor1 > ADC_REPOUSO &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       delay(10); // aguarda para verificar possível erro
       valor1 = analogRead(PIN_BTN5); // Lê o sensor 5 (entrada analogica)  
       valor2 = analogRead(PIN_BTN6); // Lê o sensor 6 (entrada analogica)  
-      if(valor1 > 450 &&   valor2 < 300 )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
+      if(valor1 > ADC_REPOUSO &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
         if(direcao == 0 || direcao == 1)
       {

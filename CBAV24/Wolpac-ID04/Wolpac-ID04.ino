@@ -39,6 +39,22 @@
 int  numid = 4 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
 int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme modelo habilitado fisicamente pelos pinos , 1 - para testes, vai ignorar a definição dos pinos e usar o modelo definido na váriavel abaixo
+
+// ---- Limiares dos sensores analógicos (valem quando tipoEntr = 1) ----
+// Leituras do ADC, 12 bits (0..4095). O sensor em repouso tem de ficar ACIMA de ADC_REPOUSO e,
+// acionado, ABAIXO de ADC_ACIONADO; a faixa entre os dois é morta de propósito, para o ruído do
+// ADC não virar contagem falsa. Se as duas leituras caírem do mesmo lado, a placa entende que os
+// dois sensores estão acionados (combinação mecanicamente impossível) e para de contar.
+// Para medir os valores da sua bancada, ponha DEBUG_ADC em 1 abaixo e leia a serial.
+// Wolpac: valores validados em bancada (indicados pelo colega que calibrou a placa).
+// A tensao que chega ao pino e menor que nas outras variantes por causa do resistor da placa,
+// por isso os limiares sao bem mais baixos. A faixa morta aqui e estreita (150..200), entao
+// confirme com DEBUG_ADC se a leitura oscilar e, se precisar, afaste os dois valores.
+#define ADC_ACIONADO 150
+#define ADC_REPOUSO  200
+
+// 1 = modo calibração: a placa NÃO conta, só imprime as leituras dos sensores na serial (115200).
+#define DEBUG_ADC 0
 int modelo = 1; // modelo de bloqueio: 1 - Foca , garem ou wolpac,  2 - Ascom/Monetel, 0 - indefinido
 const char *nomeota = "Wolpac-ID04"; // define nome que vai aparecer na IDE do arduino ao tentar programar via OTA  // "Monetel-ID01" "Foca-ID02" "Garen-ID03"  "Wolpac-ID04"
 
@@ -349,7 +365,7 @@ if (teste == 0)  // se não é teste
 if (estadoMod1 == HIGH  && estadoMod2 == LOW  ) // verifica qual modelo está sendo habilitado
 {
   modelo = 1;  // define modelo tipo foca
-  Serial.println("\nModelo 1 - Foca "); // imprime mensagem na porta serial
+  Serial.println("\nModelo 1 - Foca/Garen/Wolpac "); // imprime mensagem na porta serial
 }
 
 else if (estadoMod1 == LOW  && estadoMod2 == HIGH ) // verifica qual modelo está sendo habilitado

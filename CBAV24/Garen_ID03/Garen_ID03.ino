@@ -39,6 +39,19 @@
 int  numid = 3 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
 int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme modelo habilitado fisicamente pelos pinos , 1 - para testes, vai ignorar a definição dos pinos e usar o modelo definido na váriavel abaixo
+
+// ---- Limiares dos sensores analógicos (valem quando tipoEntr = 1) ----
+// Leituras do ADC, 12 bits (0..4095). O sensor em repouso tem de ficar ACIMA de ADC_REPOUSO e,
+// acionado, ABAIXO de ADC_ACIONADO; a faixa entre os dois é morta de propósito, para o ruído do
+// ADC não virar contagem falsa. Se as duas leituras caírem do mesmo lado, a placa entende que os
+// dois sensores estão acionados (combinação mecanicamente impossível) e para de contar.
+// Para medir os valores da sua bancada, ponha DEBUG_ADC em 1 abaixo e leia a serial.
+// valores historicos (nao recalibrado)
+#define ADC_ACIONADO 300
+#define ADC_REPOUSO  450
+
+// 1 = modo calibração: a placa NÃO conta, só imprime as leituras dos sensores na serial (115200).
+#define DEBUG_ADC 0
 int modelo = 1; // modelo de bloqueio: 1 - Foca , garem ou wolpac,  2 - Ascom/Monetel, 0 - indefinido
 const char *nomeota = "Garen-ID03"; // define nome que vai aparecer na IDE do arduino ao tentar programar via OTA  // "Monetel-ID01" "Foca-ID02" "Garen-ID03"  "Wolpac-ID04"
 

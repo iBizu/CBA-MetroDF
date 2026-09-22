@@ -146,7 +146,8 @@ bool lerVersaoNuvem(String& versaoNuvem)
   }
   else
   {
-    Serial.printf("[OTA] Falha ao ler versao.txt, HTTP %d\n", codigo);
+    Serial.println("[OTA] Falha ao ler versao.txt. HTTP " + String(codigo) + " (" + descricaoErroHttp(codigo) + ")");
+    Serial.println("[OTA] URL consultada: " + String(url_versao_txt));
   }
   http.end();
   esp_task_wdt_reset(); //Reseta o temporizador do watchdog
@@ -179,7 +180,7 @@ void executarAtualizacaoOTA(const char* origem)
     if (ultimaVersaoNuvemAvisada != nuvem)
     {
       ultimaVersaoNuvemAvisada = nuvem;
-      enviarTelegram(cabecalhoTelegram() + "\nOTA: a release 'latest' esta na versao " + nuvem + ", anterior a da placa (" FW_VERSION "). Ignorada.");
+      enviarTelegram(cabecalhoTelegram() + "\nOTA: a release do canal esta na versao " + nuvem + ", anterior a da placa (" FW_VERSION "). Ignorada.");
     }
     return;
   }

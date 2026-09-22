@@ -23,7 +23,9 @@ CLI="$HOME/AppData/Local/Programs/Arduino IDE/resources/app/lib/backend/resource
 "$CLI" --config-file "$HOME/.arduinoIDE/arduino-cli.yaml" compile --fqbn esp32:esp32:esp32 CBAV24/Monetel_ID01
 ```
 
-Serial upload: use `upload -p COMx` in place of `compile`. Network (ArduinoOTA) upload: `upload --protocol network -p <device-ip>`; the device advertises itself under the `nomeota` hostname.
+Serial upload: `./gravar.sh <Variante> <PORTA> [lab|estacao]` (`./gravar.sh --portas` lists boards) compiles and flashes over USB, applying the station override without touching the source. Network (ArduinoOTA) upload: `upload --protocol network -p <device-ip>`; the device advertises itself under the `nomeota` hostname, and the IDE network port works in every mode.
+
+**Bench gotcha:** with `teste = 0` the model comes from the jumpers on `PIN_MOD1`/`PIN_MOD2` (GPIO32/33) — exactly one must read HIGH, or `setup()` prints "Erro ao habilitar modelo" and reboots every 5 s forever. On a bare bench board set `teste = 1`, which uses the `modelo` already in each variant's editable block (Monetel `2`, the others `1`).
 
 The sketch uses ~88% of the 1.25 MB app slot. Do not switch to a larger single-app partition scheme — the GitHub OTA path needs the two OTA slots of the default scheme.
 
@@ -35,6 +37,10 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 |---|---|---|---|
 | **estação** | `AMBIENTE_LAB 0` | new release per version, tag = version (e.g. `3`), marked **latest** | `releases/latest/download/` |
 | **lab** | `AMBIENTE_LAB 1` | fixed tag `lab`, marked **pre-release** (never becomes `latest`); replace its assets to push a bench test | `releases/download/lab/` |
+
+State as of 2026-09-22: releases `lab` (pre-release) and `3` both exist with version `3`. `3` is **not yet** marked latest — `V1.0.0` still is, because it doubles as the one-time migration bridge (below). Promote `3` to latest once every bench board is on the `lab` channel: `gh release edit 3 --latest`.
+
+**Migration bridge (one-time, delete when done).** Firmware flashed before 2026-09-22 does not use these channels: the three station boards fetch the fixed tag `releases/download/V1.0.0/<name>` with no version check at all (and were 404ing nightly, since V1.0.0 only held `CBA23_*` assets), and the reworked bench Garen fetches `releases/latest/download/`, which resolves to V1.0.0. So V1.0.0 now carries, deliberately mixed: the **station** builds named `Monetel_ID01.ino.bin`, `Foca_ID02.ino.bin` and `Wolpac_ID04.ino.bin` (**underscore** — that is the name the deployed Wolpac requests; the new `OTA_ASSET` uses a hyphen), the **lab** build as `Garen_ID03.ino.bin`, and `versao.txt` = `3`. Each board pulls its own asset name, so one release migrates the whole fleet onto the right channel. The old code flashes unconditionally at 03:00, so the station boards migrate on the first night; after that they obey version comparison. Removing an asset from V1.0.0 aborts that board's migration.
 
 Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `FW_VERSION` of those binaries). `./gerar_release.sh [estacao|lab|ambos]` (Git Bash, repo root) builds everything into `release/estacao/` and `release/lab/` — station binaries are built with `--build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"`, so the committed source keeps the lab default (`#ifndef AMBIENTE_LAB`). Upload the folder's contents as the release assets; `release/` and `build/` are gitignored. Bump `FW_VERSION` in all four sketches before building, and keep it identical across them (the script refuses otherwise). `Sketch > Export Compiled Binary` in the IDE also works (writes `<Variant>/build/esp32.esp32.esp32/<Variant>.ino.bin`), but only for whatever `AMBIENTE_LAB` the source currently says.
 

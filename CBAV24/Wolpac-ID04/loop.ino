@@ -278,6 +278,7 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
  cont1a: 
  while (cont == 1)  // loop enquanto não há movimento da catraca posição 1 (1 quarto de giro para frente)
   { 
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
  
    if(ledaux < 3)
 {  
@@ -403,6 +404,7 @@ Serial.end();
 cont2a: 
   while (cont == 2)    // loop enquanto não há movimento da catraca posição 2 (dois quartos de giro para frente)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
 
 
@@ -517,6 +519,7 @@ cont2a:
  cont3a: 
   while (cont == 3)   // loop enquanto não há movimento da catraca posição 3 (três quartos de giro para frente)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
 
 
@@ -680,6 +683,7 @@ Serial.begin(115200);// inicia comunicação serial
  cont1b: 
   while (cont == -1)     //loop enquanto não há movimento da catraca posição -1 (1 quarto de giro para trás)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
 
 if(ledaux < 3)
@@ -797,6 +801,7 @@ if (tipoEntr == 1)
  cont2b: 
   while (cont == -2)   //loop enquanto não há movimento da catraca posição -2 ( dois quartos de giro para trás)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
 
    
@@ -908,6 +913,7 @@ if (tipoEntr == 1)
  cont3b: 
   while (cont == -3)    //loop enquanto não há movimento da catraca posição -3 (três quartos de giro para trás)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
   
   
@@ -1180,6 +1186,7 @@ Serial.begin(115200);// inicia comunicação serial
  cont1c: 
   while (cont == 1)  // loop enquanto não há movimento da catraca posição 1 (1 quarto de giro para frente)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     if(ledaux < 3)
 {  
 Serial.end();
@@ -1268,6 +1275,7 @@ Serial.begin(115200);// inicia comunicação serial
  cont1d: 
   while (cont == -1)     //loop enquanto não há movimento da catraca posição -1 (1 quarto de giro para trás)
   {
+    if (estadoPreso()) return;   // catraca presa fora do repouso: volta ao inicio do loop()
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
 
       if(ledaux < 3)

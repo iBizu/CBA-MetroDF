@@ -52,6 +52,13 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 
 // 1 = modo calibração: a placa NÃO conta, só imprime as leituras dos sensores na serial (115200).
 #define DEBUG_ADC 0
+
+// ---- Vigia de estado preso ----
+// Uma passagem real leva 1 ou 2 segundos. Se a catraca ficar parada FORA do repouso por mais
+// que isto (sensor emperrado, catraca deixada meia-volta, sensor desligado na bancada), a placa
+// volta ao repouso sozinha. Sem este vigia ela fica presa no laço daquele estado e para de fazer
+// OTA, resumo e Telegram em silêncio, porque essas tarefas só rodam com a catraca em repouso.
+#define TEMPO_MAX_ESTADO_MS 30000
 int modelo = 2; // modelo de bloqueio: 1 - Foca , garem ou wolpac,  2 - Ascom/Monetel, 0 - indefinido
 const char *nomeota = "Monetel-ID01"; // define nome que vai aparecer na IDE do arduino ao tentar programar via OTA  // "Monetel-ID01" "Foca-ID02" "Garen-ID03"  "Wolpac-ID04"
 

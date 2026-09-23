@@ -76,6 +76,41 @@ void enviarResumo()
   }
 }
 
+// Vigia de estado preso: ver TEMPO_MAX_ESTADO_MS no sketch principal.
+// Devolve true quando desistiu de esperar e devolveu a catraca ao repouso; quem chama deve
+// sair do loop() (um "return"), porque loop() recomeça zerando cont e volta ao estado ocioso.
+unsigned long marcoEstado = 0;    // millis() em que cont assumiu o valor atual
+int contMarcado = 0;              // valor de cont observado na última verificação
+bool avisoPresoEnviado = false;   // um aviso no Telegram por ocorrência
+
+bool estadoPreso()
+{
+  if (cont != contMarcado)      // mudou de estado: reinicia a contagem de tempo
+  {
+    contMarcado = cont;
+    marcoEstado = millis();
+    if (cont == 0) avisoPresoEnviado = false;   // voltou ao repouso: pode avisar de novo numa próxima vez
+    return false;
+  }
+  if (cont == 0) return false;                              // repouso não é estado preso
+  if (millis() - marcoEstado < TEMPO_MAX_ESTADO_MS) return false;
+
+  Serial.println(String("[Vigia] Catraca parada fora do repouso (cont = ") + String(cont) + ") ha mais de "
+               + String(TEMPO_MAX_ESTADO_MS / 1000) + " s. Voltando ao repouso.");
+  if (!avisoPresoEnviado)
+  {
+    avisoPresoEnviado = true;
+    agendarTelegram("Catraca parada fora do repouso (cont = " + String(cont) + ") por mais de "
+                  + String(TEMPO_MAX_ESTADO_MS / 1000) + " s. Verifique os sensores. "
+                  + "A placa voltou ao repouso para seguir contando e se comunicando.");
+  }
+  cont = 0;
+  direcao = 0;
+  contMarcado = 0;
+  marcoEstado = millis();
+  return true;
+}
+
 // Chamada no loop ocioso.
 void verificarHorarioResumo()
 {

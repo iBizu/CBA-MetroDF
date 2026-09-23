@@ -33,7 +33,7 @@
 // O valor abaixo é o padrão para quem compila pela IDE. O arduino-cli pode sobrepor sem editar o arquivo:
 //   --build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"   (é assim que os binários de release da estação são gerados)
 #ifndef AMBIENTE_LAB
-#define AMBIENTE_LAB 1
+#define AMBIENTE_LAB 0
 #endif
 
 int  numid = 4 ;  // id do dispositvo

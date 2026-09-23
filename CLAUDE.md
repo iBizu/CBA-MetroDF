@@ -131,4 +131,14 @@ NVS namespace `"my-app"`, key `counterF`: number of passages lost because both t
 
 - `pinoLedInterno` is **GPIO1 = UART TX**. The code deliberately does `Serial.end()` before driving the LED and `Serial.begin()` after (first three passages only, via `ledaux`). Don't "clean up" those calls; serial output is lost by design during the blink.
 - Pin map (`PIN_BTN1/2` = 15/2 for Monetel, `PIN_BTN3/4` = 16/17 digital, `PIN_BTN5/6` = 36/39 analog, `PIN_MOD0/1/2` = 25/32/33, SD on VSPI 18/19/23/5) is in `<Variant>.ino`; the SD `#define` comments record which GPIOs were found not to work.
+- **The carrier board has three separate sensor input paths, and `tipoEntr` picks which one the firmware watches.** Per the project's wiring doc (*"configurações e bibliotecas V15"*, kept by the colleague who built the hardware — note it also contains BI/database credentials, so do not attach it to this public repo):
+
+  | board input | pins | doc says it is used by | `tipoEntr` |
+  |---|---|---|---|
+  | Direto 1 / 2 | GPIO15, GPIO2 | Monetel/Ascom | n/a (`modelo 2` reads these) |
+  | Zener 1 / 2 | GPIO16, GPIO17 | Wolpac, Garen, and *some* Focas | `2` |
+  | Analógico 1 / 2 | GPIO36, GPIO39 | Foca, possibly others | `1` |
+
+  The doc and the sketch comments disagree (the sketch calls `1` "divisor de tensão (garen, wolpac)" and `2` "Zener (Foca)"), and the Wolpac was empirically validated on `1`. **Wiring varies per unit — do not infer it, measure it**: flash with `DEBUG_ADC = 1` and turn the turnstile; whichever pair moves is the one that unit is wired to. A board watching the wrong pair reads both sensors as permanently triggered, jams at `cont = 2`, and counts nothing.
+- The pin silkscreened `GND` next to `V5` (G11) is **not a real ground** — it is CMD/CSC on the official pinout. Measuring 5 V between `V5` and it will not work.
 - GitHub OTA uses `client.setInsecure()` (no cert validation) and follows redirects, because GitHub release assets 302 to a CDN.

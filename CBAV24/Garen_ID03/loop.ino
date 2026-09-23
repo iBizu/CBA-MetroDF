@@ -8,8 +8,7 @@ void loop()
   // A placa NAO conta e NAO envia nada: so mostra o que os sensores estao lendo.
   // Gire a catraca devagar, anote o valor de cada sensor em repouso e com ele acionado,
   // ponha esses numeros em ADC_REPOUSO / ADC_ACIONADO, volte DEBUG_ADC para 0 e regrave.
-  Serial.println("
-== MODO CALIBRACAO (DEBUG_ADC = 1): a placa nao esta contando ==");
+  Serial.println("== MODO CALIBRACAO (DEBUG_ADC = 1): a placa nao esta contando ==");
   Serial.println("   limiares atuais: acionado < " + String(ADC_ACIONADO) + " | repouso > " + String(ADC_REPOUSO));
   while (true)
   {

@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "4"
+#define FW_VERSION "5"
 #define OTA_ASSET  "Wolpac-ID04.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----

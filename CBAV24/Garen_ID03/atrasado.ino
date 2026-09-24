@@ -1,3 +1,20 @@
+// Uma linha do LOGREG.csv so e enviada se fizer sentido: sentido 1, 2 ou 3 e timestamp
+// numerico (ou o "E2" que a propria placa grava quando nunca sincronizou o relogio).
+// Sem esta checagem, um POSITION.txt dessincronizado do LOGREG.csv faz o seek() cair no meio
+// de uma linha, e um pedaco de timestamp vira o "sentido" — foi assim que um sentido 62 chegou
+// ao banco de teste em 24/09/2026.
+bool backlogValido(const String& sentidoLinha, const String& timestampLinha)
+{
+  if (sentidoLinha != "1" && sentidoLinha != "2" && sentidoLinha != "3") return false;
+  if (timestampLinha == "E2") return true;
+  if (timestampLinha.length() < 10 || timestampLinha.length() > 12) return false;
+  for (unsigned int i = 0; i < timestampLinha.length(); i++)
+  {
+    if (!isDigit(timestampLinha.charAt(i))) return false;
+  }
+  return true;
+}
+
 //Função que envia dados armazenados no Sd para o coordenador  
 void atrasado() 
 {   
@@ -37,6 +54,12 @@ void atrasado()
      {                 
       
        endwait = time (NULL) + 4 ;   // tempo de espera de 4 segundos
+       if (nextposition > (unsigned long)root.size())
+       {
+         // POSITION.txt aponta para fora do arquivo (ficou de um LOGREG anterior): recomeca do zero
+         Serial.println("[SD] POSITION fora do LOGREG, recomecando do inicio.");
+         nextposition = 0;
+       }
       esp_task_wdt_reset(); //Reseta o temporizador do watchdog    
         while (root.available())   //enquanto houver algo a ser lido no arquivo txt
         {
@@ -58,6 +81,17 @@ void atrasado()
          }
          sentido2.trim();
          timestamp2.trim();    // remove espaços em branco e "\r\n", impedindo que quebrem o pacote enviado ao servidor
+
+         if (!backlogValido(sentido2, timestamp2))
+         {
+           // linha corrompida (tipicamente um seek no meio de uma linha): descarta em vez de
+           // mandar lixo para o servidor, e segue para a proxima
+           Serial.println("[SD] Linha invalida no LOGREG, descartada: " + linha.substring(0, 40));
+           unsigned long posAnterior = nextposition;
+           nextposition = root.position();
+           if (nextposition <= posAnterior) break;   // nao avancou: evita laco infinito
+           continue;
+         }
          flagSD = 2;     // flag para informar a função sendMessage que não é necessario chamar LeId
          resposta = "111";    // modifica resposta para esperar a resposta do coordenador
           atraso = "1" ; // atrasado

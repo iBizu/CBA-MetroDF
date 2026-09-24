@@ -1147,13 +1147,17 @@ Serial.begin(115200);// inicia comunicação serial
     {
       cont = 0;   // mantém estado inicial
     }    
-    if(estadoBtn1 == LOW && estadoBtn2 == HIGH && (direcao == 1 ||direcao == 0) )   // verifica se o estado do sensor 1 mudou e se mudou para LIGADO
+    // Sem trava por direcao: depois de uma entrada, uma saida tambem tem de ser aceita.
+    // A condicao antiga exigia (direcao == 1 || direcao == 0) aqui e (direcao == 2 || direcao == 0)
+    // na saida, e direcao nunca voltava a zero neste ramo — entao a placa so contava passagens
+    // no mesmo sentido da primeira, descartando as demais em silencio (confirmado em bancada 24/09/2026).
+    if(estadoBtn1 == LOW && estadoBtn2 == HIGH)   // sensor 1 acionado: meia volta para frente
     {
       cont++;   // meio giro para frente
         delay(25); // delay se mudou de estado
       goto cont1c; 
     }     
-    if(estadoBtn1 == HIGH && estadoBtn2 == LOW && (direcao == 2 ||direcao == 0) )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
+    if(estadoBtn1 == HIGH && estadoBtn2 == LOW)  // sensor 2 acionado: meia volta para tras
     {      
       cont--;  // meio giro para trás 
         delay(25); // delay se mudou de estado    

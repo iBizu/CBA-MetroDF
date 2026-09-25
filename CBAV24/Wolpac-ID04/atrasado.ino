@@ -104,7 +104,17 @@ void atrasado()
             auxatra = auxatra + 1 ;
             nextposition = root.position();  // determina até que posição do arquivo txt foi lida 
           }
-          //if (resposta != "000" || auxatra > 50 ||(time (NULL) > endwait))  // se não recebeu resposta correta do coordenador
+          // O servidor recusou esta linha (4xx): repetir nao adianta e trava o backlog inteiro,
+          // porque nextposition so avanca com resposta "000". Descarta a linha e segue.
+          if (resposta != "000" && ultimoHttpCode >= 400 && ultimoHttpCode < 500)
+          {
+            Serial.println("[SD] Servidor recusou (HTTP " + String(ultimoHttpCode) + ") a linha: " + linha.substring(0, 40) + " - descartada.");
+            unsigned long posAnterior = nextposition;
+            nextposition = root.position();
+            resposta = "999";
+            if (nextposition <= posAnterior) break;   // nao avancou: evita laco infinito
+            continue;
+          }
           if (resposta != "000"  || (time (NULL) > endwait))  // se não recebeu resposta correta do coordenador
           {     
             auxatra = 0 ;

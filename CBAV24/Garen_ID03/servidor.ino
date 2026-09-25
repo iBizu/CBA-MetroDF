@@ -117,23 +117,15 @@ else{
                         Serial.println("[Servidor] Resposta sem epoch valido, relogio mantido: " + payload.substring(0, 60));
                     }
                 } else {
-                    // MODIFICAÇÃO: Tratamento de erro com timeout
+                    // Guarda o codigo para quem chamou decidir o que fazer: atrasado() precisa
+                    // distinguir "o servidor recusou esta linha" (4xx, nao adianta repetir) de
+                    // "nao consegui falar com o servidor" (codigo negativo, vale tentar depois).
+                    ultimoHttpCode = httpCode;
                     if (flagrepete != 0) {
-                        if (httpCode == -1) errormes = "CONNECTION_FAILED";
-                        if (httpCode == -2) errormes = "SEND_HEADER_FAILED";
-                        if (httpCode == -3) errormes = "SEND_PAYLOAD_FAILED";
-                        if (httpCode == -4) errormes = "NOT_CONNECTED";
-                        if (httpCode == -5) errormes = "CONNECTION_LOST";
-                        if (httpCode == -6) errormes = "NO_STREAM";
-                        if (httpCode == -7) errormes = "NO_HTTP_SERVER";
-                        if (httpCode == -8) errormes = "TOO_LESS_RAM";
-                        if (httpCode == -9) errormes = "ERROR_ENCODING";
-                        if (httpCode == -10) errormes = "STREAM_WRITE";
-                        if (httpCode == -11) errormes = "READ_TIMEOUT";
-
                         esp_task_wdt_reset(); //Reseta o temporizador do watchdog
-                        Serial.println("\nErro na requisição, falha no envio de dados. Código de erro: " + String(httpCode));
-                        Serial.println("\nDescrição de erro: " + String(errormes));
+                        Serial.println("\nErro na requisicao, falha no envio de dados. Codigo: " + String(httpCode)
+                                     + " (" + descricaoErroHttp(httpCode) + ")");
+                        Serial.println("Pacote que falhou: " + String(serv));   // sem isto nao da para saber o que o servidor recusou
                         flagrepete = 0;
                     }
                     flagSERV = 1;

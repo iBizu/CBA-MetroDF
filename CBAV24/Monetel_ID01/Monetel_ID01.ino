@@ -280,6 +280,9 @@ Preferences prefsCBA;      // segunda instancia, para os namespaces "ota" e "res
 bool primeiroBootPosOTA = false;   // esta é a primeira execução da imagem recém-gravada
 bool houveRollback = false;        // o bootloader voltou para esta imagem porque a nova travou
 bool binarioVersaoErrada = false;  // baixou a versão X, mas o binário publicado foi compilado com outra FW_VERSION
+
+int ultimoHttpCode = 0;            // ultimo codigo HTTP devolvido por servidor(), lido por atrasado()
+bool ultimoEventoFoiErro = false;  // ja houve um erro de contagem sem passagem valida depois dele
 String versaoRejeitada = "";       // versão que causou rollback (não é baixada de novo)
 String versaoAnterior = "";        // versão que rodava antes desta (guardada em Preferences)
 

@@ -666,6 +666,7 @@ Serial.begin(115200);// inicia comunicação serial
    flagE = 1;    // habilita flag para CounterE
    Serial.println("\nEnviando entrada... "); // imprime mensagem na porta serial 
    sentido = 1;    // define sentido como entrada  
+   ultimoEventoFoiErro = false;   // passagem valida: volta a aceitar registro de erro
    resposta = "111";   // altera resposta para aguardar resposta 000 do coordenador indicando recebimento
    atraso = "0";   // sem atraso
 
@@ -1063,6 +1064,7 @@ Serial.begin(115200);// inicia comunicação serial
      Serial.println("\nEnviando saída... "); // imprime mensagem na porta serial 
 
     sentido = 2;      // define o sentido como saída           
+    ultimoEventoFoiErro = false;   // passagem valida: volta a aceitar registro de erro
     resposta = "111";      // altera resposta para aguardar resposta 000 do coordenador indicando recebimento        
     atraso = "0";   // sem atraso
     
@@ -1076,6 +1078,19 @@ Serial.begin(115200);// inicia comunicação serial
  cont5a: 
   if (cont < -4 || cont > 4)   // em caso de erro e por algum motivo não contou a volta corretamente
   {  
+
+    // Um sensor preso (ou desconectado) deixa as entradas na combinacao impossivel de forma
+    // permanente, e este bloco seria executado a cada volta do loop: milhares de registros de
+    // erro por hora no banco, para uma unica falha real. Registra o primeiro, avisa no Telegram
+    // e so volta a registrar depois que uma passagem valida acontecer.
+    if (ultimoEventoFoiErro)
+    {
+      cont = 0;
+      delay(100);
+      return;   // volta ao inicio do loop(), que retoma as tarefas ociosas
+    }
+    ultimoEventoFoiErro = true;
+    agendarTelegram("Erro de contagem: sensores em combinacao impossivel (os dois acionados). Verifique a fiacao/sensores. Novos erros so serao registrados apos uma passagem valida.");
 
   
   
@@ -1261,6 +1276,7 @@ Serial.begin(115200);// inicia comunicação serial
    flagE = 1;    // habilita flag para CounterE
    Serial.println("\nEnviando entrada... "); // imprime mensagem na porta serial 
    sentido = 1;    // define sentido como entrada  
+   ultimoEventoFoiErro = false;   // passagem valida: volta a aceitar registro de erro
    resposta = "111";   // altera resposta para aguardar resposta 000 do coordenador indicando recebimento
    atraso = "0";   // sem atraso
 
@@ -1352,6 +1368,7 @@ Serial.begin(115200);// inicia comunicação serial
      Serial.println("\nEnviando saída... "); // imprime mensagem na porta serial 
 
     sentido = 2;      // define o sentido como saída           
+    ultimoEventoFoiErro = false;   // passagem valida: volta a aceitar registro de erro
     resposta = "111";      // altera resposta para aguardar resposta 000 do coordenador indicando recebimento        
     atraso = "0";   // sem atraso
     
@@ -1366,6 +1383,19 @@ Serial.begin(115200);// inicia comunicação serial
  cont3c: 
   if (cont < -2 || cont > 2)   // em caso de erro e por algum motivo não contou a volta corretamente
   {  
+
+    // Um sensor preso (ou desconectado) deixa as entradas na combinacao impossivel de forma
+    // permanente, e este bloco seria executado a cada volta do loop: milhares de registros de
+    // erro por hora no banco, para uma unica falha real. Registra o primeiro, avisa no Telegram
+    // e so volta a registrar depois que uma passagem valida acontecer.
+    if (ultimoEventoFoiErro)
+    {
+      cont = 0;
+      delay(100);
+      return;   // volta ao inicio do loop(), que retoma as tarefas ociosas
+    }
+    ultimoEventoFoiErro = true;
+    agendarTelegram("Erro de contagem: sensores em combinacao impossivel (os dois acionados). Verifique a fiacao/sensores. Novos erros so serao registrados apos uma passagem valida.");
 
 
    //Serial.end();

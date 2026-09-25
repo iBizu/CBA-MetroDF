@@ -101,8 +101,21 @@ else{
                     ind1 = payload.indexOf(':');    // localiza o primeiro separador "; " no pacote
                     ind2 = payload.indexOf('}', ind1 + 1 );    // localiza o segundo separador "; " no pacote
                     recebetempo = payload.substring(ind1 + 1, ind2 );    // localiza o segundo separador "; " no pacote
-                    atualizatempo = recebetempo.toInt();
-                    rtc.setTime(atualizatempo);
+                    // So aceita um epoch plausivel, como tempo() ja fazia. Sem esta checagem uma
+                    // resposta truncada ou inesperada zerava o relogio da placa (rtc.setTime(0) = 1970),
+                    // e dai em diante toda passagem sairia com timestamp "E2". Como o servidor
+                    // deduplica por id + data de medicao, todas elas colapsariam num unico registro:
+                    // o movimento do dia sumiria do BI sem nenhum erro aparente.
+                    long epochRecebido = recebetempo.toInt();
+                    if (epochRecebido > 1672531200)   // posterior a jan/2023
+                    {
+                        atualizatempo = epochRecebido;
+                        rtc.setTime(epochRecebido);
+                    }
+                    else
+                    {
+                        Serial.println("[Servidor] Resposta sem epoch valido, relogio mantido: " + payload.substring(0, 60));
+                    }
                 } else {
                     // MODIFICAÇÃO: Tratamento de erro com timeout
                     if (flagrepete != 0) {

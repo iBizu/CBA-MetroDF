@@ -75,7 +75,7 @@ Never hardcode a threshold back into `loop.ino`: the comparison appears ~70 time
 
 - **OTA** (`ota_update.ino`): downloads `<OTA_URL_BASE><OTA_ASSET>` (channel per `AMBIENTE_LAB`, see Releases) only when `versao.txt` from the same release is numerically **greater** than `FW_VERSION` — never a downgrade. Checked at boot (`OTA_CHECAR_NO_BOOT`) and on the schedule. `onProgress` feeds the WDT during the download. Telegram gets "baixando"/"FALHA" once per cloud version; success is announced by the next boot message.
 - **Rollback**: `rollback_hook.cpp` (`verifyRollbackLater()` → true) + `verificarEstadoOTA()` early in `setup()` confirm the image only after NVS/WDT init. A version that crashes before that rolls back and is stored in NVS `ota/rejeitada`; a downloaded binary whose own `FW_VERSION` differs from what `versao.txt` promised is also blocked (otherwise the board would re-flash it forever).
-- **Clock**: no NTP. `configurarFuso()` only sets TZ (`<-03>3`); the web service is the single time source (verified: it sends UTC epoch). `tempo()` returns `bool`; `sincronizarRelogio()` keeps counting offline if the RTC is already valid (it survives `ESP.restart()`/WDT), and only reboots when the clock was never set.
+- **Clock**: no NTP. `configurarFuso()` only sets TZ (`<-03>3`); the web service is the single time source (verified: it sends UTC epoch). `tempo()` returns `bool`; `sincronizarRelogio()` keeps counting offline if the RTC is already valid (it survives `ESP.restart()`/WDT), and only reboots when the clock was never set. **Every epoch is validated (> jan/2023) before `rtc.setTime()`, in `servidor()` as well as `tempo()`** — `servidor()` re-syncs the clock from the response to *every* count, and used to do it unvalidated, so one truncated or unexpected response would set the clock to 1970 and every later passage would carry the literal `E2` timestamp. Combined with the server's dedup rule (below) that silently collapses a whole day of counts into one row.
 - **Telegram** (`telegram.ino`): `enviarTelegram()` (JSON POST, 10 s handshake timeout) sends now; `agendarTelegram()` queues for the idle loop (`enviarTelegramPendente()`, ≤1 try/min). Boot message: reset reason / `ATUALIZADO x -> y` / `ROLLBACK`, environment, `JUMPER OTA` flag, Wi-Fi, clock, SD state. `resumo.ino`: periodic summary (deltas vs. NVS `resumo/E,S,W`, pending lines in `LOGREG.csv`), queued if Wi-Fi is down. `falhou()` queues one SD-failure alert per boot.
 - **`tarefasOciosas()`** (`resumo.ino`) is the single place blocking work runs — IDE OTA, GitHub OTA, summary, queued Telegram — called from both `cont == 0` idle loops only, so it runs **only while the turnstile is at rest**. Everything the board does besides counting therefore depends on reaching `cont == 0`.
 - **Stuck-state watchdog** (`estadoPreso()` in `resumo.ino`, called at the top of every `while (cont == N)` with `N != 0`): a real passage takes 1–2 s, so if `cont` stays non-zero for `TEMPO_MAX_ESTADO_MS` (30 s) the board logs it, queues one Telegram alert, resets `cont`/`direcao` and returns from `loop()` to get back to the idle loop. Without it a jammed sensor, a turnstile left half-turned, or a bench board with the sensor inputs floating parks the firmware in that state's `while` forever — it keeps feeding the watchdog, so it never reboots, and OTA, summaries and Telegram all stop silently. This is how the bench board behaved on 2026-09-23 when it was plugged into a PC with the sensors disconnected.
@@ -92,7 +92,7 @@ Arduino concatenates every `.ino` in a folder into one translation unit (main sk
 |---|---|
 | `<Variant>.ino` | globals, pin map, `setup()`, `setupOTA()` |
 | `loop.ino` | one turnstile event per iteration: reconcile previous send, then block in a sensor-polling state machine |
-| `sendMessage.ino` → `servidor.ino` | build the packet and HTTP GET it to `/enviarContagem/<numid>;<timestamp>;<atraso>;<sdErr>;<sentido>;` |
+| `sendMessage.ino` → `servidor.ino` | build the packet and HTTP GET it to `/enviarContagem/<numid>;<timestamp>;<atraso>;<sdErr>;<sentido>;`, then re-sync the clock from the response |
 | `tempo.ino` | `tempo()`: one bounded GET `/recuperaTimestamp`, sets the `ESP32Time` RTC; `sincronizarRelogio()`: boot policy around it |
 | `card.ino`, `cardID.ino`, `leId.ino` | SD file I/O (see below) |
 | `atrasado.ino` | replay the SD backlog and NVS-lost count to the server |
@@ -128,6 +128,11 @@ Every SD access is wrapped in `digitalWrite(SD_CS, Select)` → `SD.begin(...)` 
 NVS namespace `"my-app"`, key `counterF`: number of passages lost because both the server and the SD failed. It is sent later by `atrasado()` with `debug = 0x06` and cleared on acknowledgment. Namespaces `"ota"` (`tentada`, `rejeitada`, `versao`) and `"resumo"` (`E`, `S`, `W`) are accessed through the second `Preferences` instance `prefsCBA` because `preferences` stays open on `"my-app"` for the whole loop iteration.
 
 `resposta` is a three-digit string state: `"999"` idle, `"000"` server acknowledged, `"111"` awaiting ack / write to SD, `"222"` send failed. `debug` byte values are documented inline in `<Variant>.ino`.
+
+## Server contract (confirmed with the web service owner, 2026-09-24)
+
+- **The server deduplicates on `numid` + measurement timestamp.** Replaying the SD backlog is therefore safe and cannot double-count in the BI — that was the main open precision risk. The flip side: two records that share a board id and a timestamp collapse into one, so anything that makes the clock repeat or freeze destroys counts silently. That is why every `rtc.setTime()` is now guarded, and why an `E2` timestamp is far worse than it looks.
+- **`sentido` is always 1, 2 or 3.** Anything else in the database came from the firmware, not from the turnstile; `backlogValido()` now blocks that at the source.
 
 ## Hardware gotchas
 

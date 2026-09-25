@@ -38,7 +38,7 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 | **estação** | `AMBIENTE_LAB 0` | new release per version, tag = version (e.g. `3`), marked **latest** | `releases/latest/download/` |
 | **lab** | `AMBIENTE_LAB 1` | fixed tag `lab`, marked **pre-release** (never becomes `latest`); replace its assets to push a bench test | `releases/download/lab/` |
 
-State as of 2026-09-23: the current version is `5` — `lab` (pre-release) carries the `5` lab binaries, release `5` the station ones. No `3`/`4`/`5` is marked latest; `V1.0.0` still is, and `releases/latest/download/versao.txt` therefore still answers `3`. Promote with `gh release edit 5 --latest` only once no board still runs pre-2026-09-22 firmware — a board on the old build reads `releases/latest/download/` and would take the station binary wherever it happens to be sitting. Until then, a board flashed `estacao` reports one Telegram warning that the channel is behind its own version, which is expected. Releases `3` and `4` were superseded before any board consumed them.
+State as of 2026-09-25: the current version is `6` — `lab` (pre-release) carries the `6` lab binaries, release `6` the station ones. None of `3`..`6` is marked latest; `V1.0.0` still is, and `releases/latest/download/versao.txt` therefore still answers `3`. Promote with `gh release edit 6 --latest` only once no board still runs pre-2026-09-22 firmware — a board on the old build reads `releases/latest/download/` and would take the station binary wherever it happens to be sitting. Until then, a board flashed `estacao` reports one Telegram warning that the channel is behind its own version, which is expected. Earlier releases were superseded before any board consumed them.
 
 Validated on the bench 2026-09-23 (Wolpac): counting, the full OTA cycle (`4` → `5`, download, reboot, `Primeiro boot apos atualizacao: imagem confirmada`, Telegram `ATUALIZADO`), and the stuck-state watchdog restoring the scheduled OTA check. To force an OTA test, temporarily lower that variant's `FW_VERSION` below the channel's, flash over USB, and restore it afterwards — all four must share one version or `gerar_release.sh` refuses.
 
@@ -54,7 +54,7 @@ Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `
 
 | var | meaning |
 |---|---|
-| `FW_VERSION` | this build's version (plain integers: `"5"` as of 2026-09-23). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
+| `FW_VERSION` | this build's version (plain integers: `"6"` as of 2026-09-25). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
 | `AMBIENTE_LAB` | `1` lab (`WIFI-ARHD`, test host `10.66.24.196`, OTA from the `lab` release every `OTA_INTERVALO_MIN`, Telegram summary every `RESUMO_INTERVALO_MIN`); `0` station (`POC_MANUTENCAO`, `wsserver02-prod…`, OTA from `latest` at `OTA_HORA:OTA_MINUTO` = 03:00, summary at `RESUMO_HORA:RESUMO_MINUTO` = 23:45; the station closes 23:30). Guarded by `#ifndef` so `-DAMBIENTE_LAB=0` on the command line overrides it; from the IDE, edit the define |
 | `numid` | device id sent in every message (1–4) |
@@ -148,6 +148,14 @@ NVS namespace `"my-app"`, key `counterF`: number of passages lost because both t
   | Zener 1 / 2 | GPIO16, GPIO17 | Wolpac, Garen, and *some* Focas | `2` |
   | Analógico 1 / 2 | GPIO36, GPIO39 | Foca, possibly others | `1` |
 
-  The doc and the sketch comments disagree (the sketch calls `1` "divisor de tensão (garen, wolpac)" and `2` "Zener (Foca)"). **Wiring varies per unit — do not infer it, measure it**: flash with `DEBUG_ADC = 1` and turn the turnstile; whichever pair moves is the one that unit is wired to. A board watching the wrong pair reads both sensors as permanently triggered, jams at `cont = 2`, and counts nothing. Measured so far: **Wolpac on the analog pair** (`tipoEntr 1`, thresholds 600/730) and **Foca on the Zener pair** (`tipoEntr 2`, clean `11 → 01 → 00 → 10 → 11` on GPIO16/17, analog pins just noise) — both confirmed on the bench 2026-09-23, so the sketches' existing `tipoEntr` values are right for these two units. Both were then validated end to end (turn → count → web service → test database): Wolpac on 2026-09-23, Foca on 2026-09-24.
+  The doc and the sketch comments disagree (the sketch calls `1` "divisor de tensão (garen, wolpac)" and `2` "Zener (Foca)"). **Wiring varies per unit — do not infer it, measure it**: flash with `DEBUG_ADC = 1` and turn the turnstile; whichever pair moves is the one that unit is wired to. A board watching the wrong pair reads both sensors as permanently triggered and stops counting. Measured and validated end to end (turn → count → web service → test database) on the bench:
+
+  | variant | pair that moves | setting | pattern | validated |
+  |---|---|---|---|---|
+  | Wolpac | analog GPIO36/39 | `tipoEntr 1`, 600/730 | `11 → 01 → 00 → 10 → 11` (4 steps) | 2026-09-23 |
+  | Foca | Zener GPIO16/17 | `tipoEntr 2` | same 4-step quadrature | 2026-09-24 |
+  | Monetel | Direto GPIO15/2 | `modelo 2` | rest `11`, one pin pulses and returns (2 steps): GPIO15 = entry, GPIO2 = exit | 2026-09-25 |
+
+  Garen was validated on 2026-09-18 on pre-channel firmware and still needs a re-test on the current build.
 - The pin silkscreened `GND` next to `V5` (G11) is **not a real ground** — it is CMD/CSC on the official pinout. Measuring 5 V between `V5` and it will not work.
 - GitHub OTA uses `client.setInsecure()` (no cert validation) and follows redirects, because GitHub release assets 302 to a CDN.

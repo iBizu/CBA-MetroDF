@@ -17,3 +17,7 @@ release/
 
 # versao.txt da raiz é o arquivo de upload manual; o gerado fica em release/<canal>/versao.txt
 /versao.txt
+
+# Arquivos compactados criados a mao para backup local
+*.rar
+*.zip

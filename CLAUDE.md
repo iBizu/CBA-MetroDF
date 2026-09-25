@@ -155,7 +155,8 @@ NVS namespace `"my-app"`, key `counterF`: number of passages lost because both t
   | Wolpac | analog GPIO36/39 | `tipoEntr 1`, 600/730 | `11 → 01 → 00 → 10 → 11` (4 steps) | 2026-09-23 |
   | Foca | Zener GPIO16/17 | `tipoEntr 2` | same 4-step quadrature | 2026-09-24 |
   | Monetel | Direto GPIO15/2 | `modelo 2` | rest `11`, one pin pulses and returns (2 steps): GPIO15 = entry, GPIO2 = exit | 2026-09-25 |
+  | Garen | analog GPIO36/39 | `tipoEntr 1`, 300/450 | same 4-step quadrature | 2026-09-25 |
 
-  Garen was validated on 2026-09-18 on pre-channel firmware and still needs a re-test on the current build.
+  All four are validated on the current build, covering all three input paths on the carrier board.
 - The pin silkscreened `GND` next to `V5` (G11) is **not a real ground** — it is CMD/CSC on the official pinout. Measuring 5 V between `V5` and it will not work.
 - GitHub OTA uses `client.setInsecure()` (no cert validation) and follows redirects, because GitHub release assets 302 to a CDN.

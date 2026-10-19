@@ -38,7 +38,7 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 | **estação** | `AMBIENTE_LAB 0` | new release per version, tag = version (e.g. `3`), marked **latest** | `releases/latest/download/` |
 | **lab** | `AMBIENTE_LAB 1` | fixed tag `lab`, marked **pre-release** (never becomes `latest`); replace its assets to push a bench test | `releases/download/lab/` |
 
-State as of 2026-09-25: the current version is `6` — `lab` (pre-release) carries the `6` lab binaries, release `6` the station ones. None of `3`..`6` is marked latest; `V1.0.0` still is, and `releases/latest/download/versao.txt` therefore still answers `3`. Promote with `gh release edit 6 --latest` only once no board still runs pre-2026-09-22 firmware — a board on the old build reads `releases/latest/download/` and would take the station binary wherever it happens to be sitting. Until then, a board flashed `estacao` reports one Telegram warning that the channel is behind its own version, which is expected. Earlier releases were superseded before any board consumed them.
+State as of 2026-10-19: the current version is `7` — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones. `7` is the first release with the millisecond timestamp. None of `3`..`7` is marked latest; `V1.0.0` still is, and `releases/latest/download/versao.txt` therefore still answers `3`. Promote with `gh release edit 7 --latest` only once no board still runs pre-2026-09-22 firmware — a board on the old build reads `releases/latest/download/` and would take the station binary wherever it happens to be sitting. Until then, a board flashed `estacao` reports one Telegram warning that the channel is behind its own version, which is expected. Earlier releases were superseded before any board consumed them.
 
 Validated on the bench 2026-09-23 (Wolpac): counting, the full OTA cycle (`4` → `5`, download, reboot, `Primeiro boot apos atualizacao: imagem confirmada`, Telegram `ATUALIZADO`), and the stuck-state watchdog restoring the scheduled OTA check. To force an OTA test, temporarily lower that variant's `FW_VERSION` below the channel's, flash over USB, and restore it afterwards — all four must share one version or `gerar_release.sh` refuses.
 
@@ -54,7 +54,7 @@ Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `
 
 | var | meaning |
 |---|---|
-| `FW_VERSION` | this build's version (plain integers: `"6"` as of 2026-09-25). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
+| `FW_VERSION` | this build's version (plain integers: `"7"` as of 2026-10-19). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
 | `AMBIENTE_LAB` | `1` lab (`WIFI-ARHD`, test host `10.66.24.196`, OTA from the `lab` release every `OTA_INTERVALO_MIN`, Telegram summary every `RESUMO_INTERVALO_MIN`); `0` station (`POC_MANUTENCAO`, `wsserver02-prod…`, OTA from `latest` at `OTA_HORA:OTA_MINUTO` = 03:00, summary at `RESUMO_HORA:RESUMO_MINUTO` = 23:45; the station closes 23:30). Guarded by `#ifndef` so `-DAMBIENTE_LAB=0` on the command line overrides it; from the IDE, edit the define |
 | `numid` | device id sent in every message (1–4) |
@@ -133,7 +133,7 @@ NVS namespace `"my-app"`, key `counterF`: number of passages lost because both t
 
 ## Timestamp format: milliseconds (since 2026-10-19)
 
-The passage timestamp sent to the web service is **13 digits, in milliseconds** (`timestampMs()` in `tempo.ino`), changed from the 10-digit seconds the project started with. The board's own clock still runs in **seconds** — only the outgoing count carries milliseconds.
+The passage timestamp sent to the web service is **13 digits, in milliseconds** (`timestampMs()` in `tempo.ino`), changed from the 10-digit seconds the project started with; first shipped in release `7`, validated on the bench with the Garen on 2026-10-19. The board's own clock still runs in **seconds** — only the outgoing count carries milliseconds.
 
 - `timestampMs()` reads the clock **once** with `gettimeofday()`. `rtc.getEpoch()` and `rtc.getMillis()` are two separate reads, and a second ticking over between them would produce a value one second off.
 - The sub-second digits are real elapsed time, but the clock is only ever *set* with second precision (the server's sync endpoint sends seconds), so the fraction is not aligned with the server's. It is precise for ordering and uniqueness, not for absolute sub-second accuracy.

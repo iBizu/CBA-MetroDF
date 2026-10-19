@@ -7,7 +7,9 @@ bool backlogValido(const String& sentidoLinha, const String& timestampLinha)
 {
   if (sentidoLinha != "1" && sentidoLinha != "2" && sentidoLinha != "3") return false;
   if (timestampLinha == "E2") return true;
-  if (timestampLinha.length() < 10 || timestampLinha.length() > 12) return false;
+  // 13 digitos = milissegundos (formato atual); 10 = segundos, de linhas gravadas antes dessa
+  // mudanca. Qualquer outro tamanho e lixo (tipicamente um seek no meio de uma linha).
+  if (timestampLinha.length() != 13 && timestampLinha.length() != 10) return false;
   for (unsigned int i = 0; i < timestampLinha.length(); i++)
   {
     if (!isDigit(timestampLinha.charAt(i))) return false;
@@ -91,6 +93,13 @@ void atrasado()
            nextposition = root.position();
            if (nextposition <= posAnterior) break;   // nao avancou: evita laco infinito
            continue;
+         }
+
+         // Linha gravada quando o timestamp ainda era em segundos: converte para milissegundos,
+         // para o servidor nunca receber os dois formatos misturados na mesma coluna.
+         if (timestamp2.length() == 10)
+         {
+           timestamp2 = String((int64_t)strtoll(timestamp2.c_str(), NULL, 10) * 1000LL);
          }
          flagSD = 2;     // flag para informar a função sendMessage que não é necessario chamar LeId
          resposta = "111";    // modifica resposta para esperar a resposta do coordenador

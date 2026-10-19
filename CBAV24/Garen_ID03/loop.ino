@@ -660,7 +660,7 @@ Serial.begin(115200);// inicia comunicação serial
    }
    if ( ep  > 1672531200 ) // se o tempo é posterior a janeiro de 2023 ( consegiu atualizar o epoch time)
    {
-      timestamp  = String(ep) ;   // timestamp recebe tempo armazenado em ep
+      timestamp  = timestampMs() ;   // timestamp em milissegundos (13 digitos), ver tempo.ino
    }
    cont = 0 ;    // reseta contagem de giro                          
    flagE = 1;    // habilita flag para CounterE
@@ -1056,7 +1056,7 @@ Serial.begin(115200);// inicia comunicação serial
     }
     if ( ep  > 1672531200 ) // se o tempo é posterior a janeiro de 2023 ( consegiu atualizar o epoch time)
     {
-      timestamp  = String(ep) ;   // timestamp recebe tempo armazenado em ep
+      timestamp  = timestampMs() ;   // timestamp em milissegundos (13 digitos), ver tempo.ino
     }
     cont = 0 ;    // reseta contagem de giro
     flagM = 1;   // habilita flag para msgID
@@ -1120,7 +1120,7 @@ Serial.begin(115200);// inicia comunicação serial
     }
     if ( ep  > 1672531200 ) // se o tempo é posterior a janeiro de 2023 ( consegiu atualizar o epoch time)
     {
-      timestamp  = String(ep) ;   // timestamp recebe tempo armazenado em ep
+      timestamp  = timestampMs() ;   // timestamp em milissegundos (13 digitos), ver tempo.ino
     }
     cont = 0 ;    // reseta contagem de giro   
     flagM = 1;    // habilita flag para msgID
@@ -1270,7 +1270,7 @@ Serial.begin(115200);// inicia comunicação serial
    }
    if ( ep  > 1672531200 ) // se o tempo é posterior a janeiro de 2023 ( consegiu atualizar o epoch time)
    {
-      timestamp  = String(ep) ;   // timestamp recebe tempo armazenado em ep
+      timestamp  = timestampMs() ;   // timestamp em milissegundos (13 digitos), ver tempo.ino
    }
    cont = 0 ;    // reseta contagem de giro                          
    flagE = 1;    // habilita flag para CounterE
@@ -1360,7 +1360,7 @@ Serial.begin(115200);// inicia comunicação serial
     }
     if ( ep  > 1672531200 ) // se o tempo é posterior a janeiro de 2023 ( consegiu atualizar o epoch time)
     {
-      timestamp  = String(ep) ;   // timestamp recebe tempo armazenado em ep
+      timestamp  = timestampMs() ;   // timestamp em milissegundos (13 digitos), ver tempo.ino
     }
     cont = 0 ;    // reseta contagem de giro
     flagM = 1;   // habilita flag para msgID
@@ -1424,7 +1424,7 @@ Serial.begin(115200);// inicia comunicação serial
     }
     if ( ep  > 1672531200 ) // se o tempo é posterior a janeiro de 2023 ( consegiu atualizar o epoch time)
     {
-      timestamp  = String(ep) ;   // timestamp recebe tempo armazenado em ep
+      timestamp  = timestampMs() ;   // timestamp em milissegundos (13 digitos), ver tempo.ino
     }
     cont = 0 ;    // reseta contagem de giro   
     flagM = 1;    // habilita flag para msgID

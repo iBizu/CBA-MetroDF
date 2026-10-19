@@ -1,5 +1,33 @@
 // Sincronização do relógio com o servidor (GET /recuperaTimestamp).
 
+// Timestamp da passagem em milissegundos (13 digitos), que e o formato esperado pelo Web Service.
+// Le o relogio UMA vez: getEpoch() e getMillis() sao duas leituras separadas e, se o segundo virasse
+// entre elas, o valor sairia 1 segundo errado.
+// Os 3 digitos a mais sao tempo real decorrido, mas o instante em que o relogio foi acertado pelo
+// servidor vem so com precisao de segundo, entao a fracao nao e sincronizada com a do servidor.
+// Ainda assim resolve um problema real: o servidor deduplica por id + data, e com segundos duas
+// passagens no mesmo segundo colapsavam num registro so.
+// Converte o epoch recebido do servidor para SEGUNDOS, aceitando 10 digitos (segundos) ou
+// 13 (milissegundos). Devolve 0 se o valor nao for plausivel.
+// O relogio da placa trabalha em segundos; so o timestamp da contagem enviada e em milissegundos.
+// Sem isto, um servidor que passasse a responder em milissegundos estouraria o long de 32 bits do
+// toInt() e o relogio seria acertado com lixo — e dai toda passagem sairia com data errada.
+long epochSegundos(const String& recebido)
+{
+  long long valor = strtoll(recebido.c_str(), NULL, 10);
+  if (valor > 1000000000000LL) valor /= 1000LL;   // veio em milissegundos
+  if (valor < 1672531200LL || valor > 4102444800LL) return 0;   // fora de jan/2023 .. jan/2100
+  return (long)valor;
+}
+
+String timestampMs()
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  int64_t ms = (int64_t)tv.tv_sec * 1000LL + (tv.tv_usec / 1000);
+  return String(ms);
+}
+
 // descrição dos códigos negativos do HTTPClient
 String descricaoErroHttp(int httpCode)
 {
@@ -66,8 +94,8 @@ bool tempo()
     ind1 = payload.indexOf(':');
     ind2 = payload.indexOf('}', ind1 + 1 );
     recebetempo = payload.substring(ind1 + 1, ind2 );
-    long epoch = recebetempo.toInt();
-    if (epoch > 1672531200)   // posterior a jan/2023
+    long epoch = epochSegundos(recebetempo);
+    if (epoch > 0)
     {
       atualizatempo = epoch;
       rtc.setTime(epoch);

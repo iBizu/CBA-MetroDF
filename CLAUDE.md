@@ -94,7 +94,7 @@ Arduino concatenates every `.ino` in a folder into one translation unit (main sk
 |---|---|
 | `<Variant>.ino` | globals, pin map, `setup()`, `setupOTA()` |
 | `loop.ino` | one turnstile event per iteration: reconcile previous send, then block in a sensor-polling state machine |
-| `sendMessage.ino` → `servidor.ino` | build the packet and HTTP GET it to `/enviarContagem/<numid>;<timestamp>;<atraso>;<sdErr>;<sentido>;`, then re-sync the clock from the response |
+| `sendMessage.ino` → `servidor.ino` | build the packet and HTTP GET it to `/enviarContagem/<numid>;<timestampMs>;<atraso>;<sdErr>;<sentido>;`, then re-sync the clock from the response |
 | `tempo.ino` | `tempo()`: one bounded GET `/recuperaTimestamp`, sets the `ESP32Time` RTC; `sincronizarRelogio()`: boot policy around it |
 | `card.ino`, `cardID.ino`, `leId.ino` | SD file I/O (see below) |
 | `atrasado.ino` | replay the SD backlog and NVS-lost count to the server |
@@ -111,7 +111,7 @@ Arduino concatenates every `.ino` in a folder into one translation unit (main sk
 **`loop()`** — each pass handles exactly one passage:
 1. *Reconcile* the previous send using `flagSERV`/`resposta`: on failure append `sentido;timestamp;` to `LOGREG.csv` (or, if the SD also failed, bump NVS `counterF`); on success call `atrasado()` if there is a backlog.
 2. *Sense* in a `goto`-label state machine (`cont0a…cont4b` for `modelo 1`, `cont0c…cont3c` for `modelo 2`). `cont` counts quarter-turns; `+4`/`+2` = entry (`sentido 1`), `-4`/`-2` = exit (`sentido 2`), an impossible sensor combination pushes `cont` out of range = error (`sentido 3`). `direcao` remembers the last direction to disambiguate glitches. `ArduinoOTA.handle()` and `verificarHorarioOTA()` only run in the idle `cont == 0` loop.
-3. On a completed passage: `timestamp = rtc.getEpoch()` (or the literal `"E2"` if the epoch is still pre-2023, i.e. never synced), set `flagE/flagS/flagW`, `sendMessage()`.
+3. On a completed passage: `timestamp = timestampMs()` (or the literal `"E2"` if the clock is still pre-2023, i.e. never synced), set `flagE/flagS/flagW`, `sendMessage()`.
 
 Sensing is fully blocking — nothing is counted while `servidor()` is talking to the server. That is why `servidor()` uses deliberately tight timeouts (350 ms request / 700 ms connect / 800 ms total): a slow server must not eat the next passage. Keep any change here fast.
 
@@ -130,6 +130,16 @@ Every SD access is wrapped in `digitalWrite(SD_CS, Select)` → `SD.begin(...)` 
 NVS namespace `"my-app"`, key `counterF`: number of passages lost because both the server and the SD failed. It is sent later by `atrasado()` with `debug = 0x06` and cleared on acknowledgment. Namespaces `"ota"` (`tentada`, `rejeitada`, `versao`) and `"resumo"` (`E`, `S`, `W`) are accessed through the second `Preferences` instance `prefsCBA` because `preferences` stays open on `"my-app"` for the whole loop iteration.
 
 `resposta` is a three-digit string state: `"999"` idle, `"000"` server acknowledged, `"111"` awaiting ack / write to SD, `"222"` send failed. `debug` byte values are documented inline in `<Variant>.ino`.
+
+## Timestamp format: milliseconds (since 2026-10-19)
+
+The passage timestamp sent to the web service is **13 digits, in milliseconds** (`timestampMs()` in `tempo.ino`), changed from the 10-digit seconds the project started with. The board's own clock still runs in **seconds** — only the outgoing count carries milliseconds.
+
+- `timestampMs()` reads the clock **once** with `gettimeofday()`. `rtc.getEpoch()` and `rtc.getMillis()` are two separate reads, and a second ticking over between them would produce a value one second off.
+- The sub-second digits are real elapsed time, but the clock is only ever *set* with second precision (the server's sync endpoint sends seconds), so the fraction is not aligned with the server's. It is precise for ordering and uniqueness, not for absolute sub-second accuracy.
+- That uniqueness is the point: the server deduplicates on `numid` + timestamp, so with seconds two passages in the same second on one board collapsed into a single row. Milliseconds remove that.
+- **`LOGREG.csv` can hold both formats.** `backlogValido()` accepts exactly 10 digits (legacy seconds) or 13 (milliseconds) — any other length is corruption — and `atrasado()` multiplies a 10-digit value by 1000 before sending, so the server never receives the two formats mixed in one column.
+- `epochSegundos()` (`tempo.ino`) parses the server's clock reply with `strtoll` and accepts **either** 10 or 13 digits, normalising to seconds. Both `tempo()` and `servidor()` use it. The previous `toInt()` is 32-bit and would overflow on a 13-digit value, so if the web service ever switches its sync reply to milliseconds too, the board sets its clock from garbage instead.
 
 ## Server contract (confirmed with the web service owner, 2026-09-24)
 

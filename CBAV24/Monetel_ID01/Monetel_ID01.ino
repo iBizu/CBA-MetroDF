@@ -145,7 +145,7 @@ String payload = "000000000"; // recebe resposta do servidor
 String  recebetempo; // ajuda a separar payload
 int atualizatempo = 0 ; // variavel para converter recebtempo em inteiro
 int ep;  // variavel auxiliar para verificar o epoch time
-String timestamp = "0000000000";   // grava o timestamp do giro da catraca
+String timestamp = "0000000000000";   // grava o timestamp do giro da catraca (milissegundos, 13 digitos)
 long timestampint = 0 ;     // variavel auxiliar para converter timestamp para inteiro
 int sentido = 0;      // variável para armazenar o sentido de movimento da catraca  (1 para entrada, 2 para saída e 3 para erro)
 String atraso = "0";  // variavel auxiliar para detectar atraso do pacote (0 para ok, 1 para atrasado)

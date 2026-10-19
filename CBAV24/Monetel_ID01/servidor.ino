@@ -106,8 +106,8 @@ else{
                     // e dai em diante toda passagem sairia com timestamp "E2". Como o servidor
                     // deduplica por id + data de medicao, todas elas colapsariam num unico registro:
                     // o movimento do dia sumiria do BI sem nenhum erro aparente.
-                    long epochRecebido = recebetempo.toInt();
-                    if (epochRecebido > 1672531200)   // posterior a jan/2023
+                    long epochRecebido = epochSegundos(recebetempo);
+                    if (epochRecebido > 0)
                     {
                         atualizatempo = epochRecebido;
                         rtc.setTime(epochRecebido);

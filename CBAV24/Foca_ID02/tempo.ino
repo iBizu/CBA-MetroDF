@@ -7,6 +7,14 @@
 // servidor vem so com precisao de segundo, entao a fracao nao e sincronizada com a do servidor.
 // Ainda assim resolve um problema real: o servidor deduplica por id + data, e com segundos duas
 // passagens no mesmo segundo colapsavam num registro so.
+String timestampMs()
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  int64_t ms = (int64_t)tv.tv_sec * 1000LL + (tv.tv_usec / 1000);
+  return String(ms);
+}
+
 // Converte o epoch recebido do servidor para SEGUNDOS, aceitando 10 digitos (segundos) ou
 // 13 (milissegundos). Devolve 0 se o valor nao for plausivel.
 // O relogio da placa trabalha em segundos; so o timestamp da contagem enviada e em milissegundos.
@@ -18,14 +26,6 @@ long epochSegundos(const String& recebido)
   if (valor > 1000000000000LL) valor /= 1000LL;   // veio em milissegundos
   if (valor < 1672531200LL || valor > 4102444800LL) return 0;   // fora de jan/2023 .. jan/2100
   return (long)valor;
-}
-
-String timestampMs()
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  int64_t ms = (int64_t)tv.tv_sec * 1000LL + (tv.tv_usec / 1000);
-  return String(ms);
 }
 
 // descrição dos códigos negativos do HTTPClient

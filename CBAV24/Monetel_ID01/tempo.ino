@@ -58,20 +58,15 @@ bool tempo()
   if (WiFi.status() != WL_CONNECTED) // se não está conectado ao wifi, tenta por até 10 s
   {
     Serial.println("\nSem Wi-Fi, tentando conectar para atualizar a hora... ");
-    if (otaativ == 1)
-    {
-      WiFi.begin(ssidOTA, passwordOTA);
-    }
-    else
-    {
-      WiFi.begin(ssid, password);
-    }
-    for (x = 0; x < 20 && WiFi.status() != WL_CONNECTED; x++)
-    {
-      delay(500);
-      esp_task_wdt_reset(); //Reseta o temporizador do watchdog
-    }
-    if (WiFi.status() != WL_CONNECTED)
+    // Reaproveita tentarRede() (ambiente.ino), que desconecta antes de chamar WiFi.begin().
+    // Sem o disconnect, o radio continuava no estado "connecting" deixado pelo setupOTA() que
+    // acabou de desistir, o ESP-IDF recusava a nova configuracao ("sta is connecting, cannot set
+    // config") e as oito tentativas de sincronizarRelogio() gastavam 2 minutos olhando uma conexao
+    // travada, sem fazer uma unica tentativa real. Visto em bancada em 20/10/2026, numa placa de
+    // estacao ligada no laboratorio.
+    const char* rede  = (otaativ == 1) ? ssidOTA     : ssid;
+    const char* senha = (otaativ == 1) ? passwordOTA : password;
+    if (!tentarRede(rede, senha, 10))
     {
       Serial.println("\nFalhou ao conectar ao wifi ");
       return false;

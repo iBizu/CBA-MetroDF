@@ -114,13 +114,15 @@ bool estadoPreso()
 // Chamada no loop ocioso.
 void verificarHorarioResumo()
 {
-#if AMBIENTE_LAB
-  if (millis() - ultimoResumo >= (unsigned long)RESUMO_INTERVALO_MIN * 60000UL)
+  if (ambienteLab)
   {
-    ultimoResumo = millis();
-    enviarResumo();
+    if (millis() - ultimoResumo >= (unsigned long)RESUMO_INTERVALO_MIN * 60000UL)
+    {
+      ultimoResumo = millis();
+      enviarResumo();
+    }
+    return;
   }
-#else
   if (!relogioValido()) return;
   if (rtc.getHour(true) == RESUMO_HORA && rtc.getMinute() == RESUMO_MINUTO)
   {
@@ -134,7 +136,6 @@ void verificarHorarioResumo()
   {
     resumoEnviadoNesteMinuto = false;
   }
-#endif
 }
 
 // Tarefas que só rodam com a catraca parada (cont == 0). Qualquer uma pode bloquear alguns

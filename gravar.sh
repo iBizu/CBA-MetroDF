@@ -8,10 +8,10 @@
 #   ./gravar.sh Wolpac-ID04  COM7 estacao   # configuração de produção
 #   ./gravar.sh --portas                    # lista as placas conectadas
 #
-# "lab" grava a configuração de bancada (WIFI-ARHD, servidor de teste, canal de OTA "lab").
-# "estacao" grava a de produção (POC_MANUTENCAO, servidor de produção, canal "latest").
-# O ambiente é sempre aplicado na compilação, sem editar o arquivo: o padrão do #define no fonte
-# (hoje estação, desde fa9fbb4) não influencia o que esta gravação coloca na placa.
+# Desde a versão 8 a placa descobre o ambiente sozinha no boot (ver ambiente.ino), então o terceiro
+# argumento só semeia o primeiro boot com NVS vazia: "lab" semeia bancada, "estacao" semeia produção.
+# Se a semente estiver errada, a detecção corrige no mesmo boot, gastando uma tentativa a mais.
+# O valor é sempre aplicado na compilação, sem editar o arquivo.
 set -euo pipefail
 
 CLI="$HOME/AppData/Local/Programs/Arduino IDE/resources/app/lib/backend/resources/arduino-cli.exe"

@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "7"
+#define FW_VERSION "8"
 #define OTA_ASSET  "Garen_ID03.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -29,12 +29,22 @@
 //     atualizações vindas da release de tag "lab" no GitHub
 // 0 = estação:             POC_MANUTENCAO, servidor de produção, OTA às 03:00 e resumo no fechamento,
 //     atualizações vindas da release "latest" no GitHub
-// A placa informa no Telegram, a cada boot, em qual ambiente acha que está.
-// O valor abaixo é o padrão para quem compila pela IDE. O arduino-cli pode sobrepor sem editar o arquivo:
-//   --build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"   (é assim que os binários de release da estação são gerados)
+//
+// O ambiente NÃO é mais escolhido na gravação: a placa descobre onde está no boot, tentando conectar
+// (conectarAmbiente() em ambiente.ino). A POC_MANUTENCAO é rede oculta, então uma varredura não a
+// enxerga — o que vale como prova é conseguir associar. Quem conectar define a rede, o servidor, o
+// canal de OTA e os horários, e o ambiente fica gravado na NVS para o boot seguinte.
+//
+// O valor abaixo é só a SEMENTE do primeiro boot (NVS vazia) e o que a placa mantém se nenhuma das
+// duas redes responder. O arduino-cli pode sobrepor sem editar o arquivo:
+//   --build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"
 #ifndef AMBIENTE_LAB
 #define AMBIENTE_LAB 0
 #endif
+
+// Limite de cada tentativa de conexão, em segundos. No pior caso o boot gasta o dobro disto, quando
+// a placa mudou de lugar e a primeira rede tentada é a do lugar antigo.
+#define TEMPO_REDE_S 12
 
 int  numid = 3 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
@@ -62,25 +72,32 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 int modelo = 1; // modelo de bloqueio: 1 - Foca , garem ou wolpac,  2 - Ascom/Monetel, 0 - indefinido
 const char *nomeota = "Garen-ID03"; // define nome que vai aparecer na IDE do arduino ao tentar programar via OTA  // "Monetel-ID01" "Foca-ID02" "Garen-ID03"  "Wolpac-ID04"
 
-#if AMBIENTE_LAB
-  //dados para conectar ao wi-fi (escola metroviaria, teste):
-  const char* ssid = WIFI_LAB_SSID;
-  const char* password = WIFI_LAB_SENHA;
-  const char* host = "10.66.24.196";          // Web Service de teste
-  const int port = 9668;
-  #define OTA_INTERVALO_MIN     5    // bancada: verifica atualização a cada 5 minutos
-  #define RESUMO_INTERVALO_MIN  30   // bancada: resumo no Telegram a cada 30 minutos
-#else
-  //dados para conectar ao wi-fi (estação, final):
-  const char* ssid = WIFI_ESTACAO_SSID;
-  const char* password = WIFI_ESTACAO_SENHA;
-  const char* host = "wsserver02-prod.metro.gdfnet.df";   // Web Service de produção
-  const int port = 9668;
-  #define OTA_HORA       3     // estação: verifica atualização às 03:00 (estação fechada)
-  #define OTA_MINUTO     0
-  #define RESUMO_HORA    23    // estação: resumo diário no fechamento
-  #define RESUMO_MINUTO  45
-#endif
+// Os dois ambientes ficam compilados no binário; aplicarAmbiente() escolhe um no boot.
+//dados para conectar ao wi-fi (escola metroviaria, teste):
+const char* const SSID_LAB      = WIFI_LAB_SSID;
+const char* const SENHA_LAB     = WIFI_LAB_SENHA;
+const char* const HOST_LAB      = "10.66.24.196";                  // Web Service de teste
+//dados para conectar ao wi-fi (estação, final):
+const char* const SSID_ESTACAO  = WIFI_ESTACAO_SSID;
+const char* const SENHA_ESTACAO = WIFI_ESTACAO_SENHA;
+const char* const HOST_ESTACAO  = "wsserver02-prod.metro.gdfnet.df";   // Web Service de produção
+
+#define OTA_INTERVALO_MIN     5    // bancada: verifica atualização a cada 5 minutos
+#define RESUMO_INTERVALO_MIN  30   // bancada: resumo no Telegram a cada 30 minutos
+#define OTA_HORA       3     // estação: verifica atualização às 03:00 (estação fechada)
+#define OTA_MINUTO     0
+#define RESUMO_HORA    23    // estação: resumo diário no fechamento
+#define RESUMO_MINUTO  45
+
+// Ambiente em vigor. Só valem depois de aplicarAmbiente(); o valor inicial é a semente de compilação,
+// para o caso de alguma coisa ler isto antes do setup().
+int ambienteLab = AMBIENTE_LAB;   // 1 bancada, 0 estação
+int ambienteDetectado = 0;        // 1 = uma das redes conectou e confirmou o ambiente neste boot
+int ambienteMudou = 0;            // 1 = o ambiente confirmado é diferente do que estava na NVS
+const char* ssid     = AMBIENTE_LAB ? SSID_LAB  : SSID_ESTACAO;
+const char* password = AMBIENTE_LAB ? SENHA_LAB : SENHA_ESTACAO;
+const char* host     = AMBIENTE_LAB ? HOST_LAB  : HOST_ESTACAO;
+const int port = 9668;             // igual nos dois ambientes
 
 // 1 = além do horário programado, verifica atualização logo após conectar no boot.
 // Uma placa que reinicia por erro no firmware ganha assim uma chance de puxar a correção a cada boot (auto-cura).
@@ -94,13 +111,11 @@ const char* TG_CHAT  = TELEGRAM_CHAT;
 // Estação: release marcada como "latest" (cada versão nova = release nova, tag = versão).
 // Laboratório: release de tag fixa "lab", marcada como PRE-RELEASE no GitHub — pre-release nunca vira
 // "latest", então um binário de teste da bancada nunca chega às placas da estação, e vice-versa.
-#if AMBIENTE_LAB
-  #define OTA_URL_BASE "https://github.com/iBizu/CBA-MetroDF/releases/download/lab/"
-#else
-  #define OTA_URL_BASE "https://github.com/iBizu/CBA-MetroDF/releases/latest/download/"
-#endif
-const char* url_versao_txt   = OTA_URL_BASE "versao.txt";
-const char* url_firmware_ota = OTA_URL_BASE OTA_ASSET;
+#define OTA_URL_LAB     "https://github.com/iBizu/CBA-MetroDF/releases/download/lab/"
+#define OTA_URL_ESTACAO "https://github.com/iBizu/CBA-MetroDF/releases/latest/download/"
+// Montadas por aplicarAmbiente(). São String porque o canal só se decide em tempo de execução.
+String url_versao_txt;
+String url_firmware_ota;
 
 
 // programação OTA (via wifi)
@@ -394,7 +409,7 @@ else
   configurarFuso();   // fuso de Brasília (sem NTP: o relógio vem do servidor)
 
   Serial.println("\nConectando à rede Wi-Fi...");
-  setupOTA(); // Liga o Wi-Fi (até 15 s) e prepara o OTA local (IDE)
+  setupOTA(); // Descobre o ambiente conectando (ate 2 x TEMPO_REDE_S) e prepara o OTA local (IDE)
   delay(100);
 
   sincronizarRelogio();   // pede a hora ao servidor; só insiste (e reinicia) se o relógio ainda for inválido
@@ -450,30 +465,10 @@ void setupOTA() {
 
   WiFi.mode(WIFI_STA);
 
-  // Três situações (a programação pela IDE via Wi-Fi fica habilitada em todas, ver abaixo):
-  // - jumper nos pinos 0 e 4 no boot: "modo físico OTA" -> rede de programação (ssidOTA), independe de AMBIENTE_LAB.
-  //   É o caminho de emergência para gravar a placa pelo Wi-Fi quando o conector USB estiver com defeito.
-  // - sem jumper e AMBIENTE_LAB 1: laboratório -> mesma rede de programação, servidor de teste.
-  // - sem jumper e AMBIENTE_LAB 0: estação -> POC_MANUTENCAO, servidor de produção.
-  if(otaativ == 1) {
-    Serial.println("Modo físico OTA (jumper nos pinos 0 e 4). Tentando rede de programação: " + String(ssidOTA));
-    WiFi.begin(ssidOTA, passwordOTA);
-  } else {
-#if AMBIENTE_LAB
-    Serial.println("Modo laboratório (rede de programação OTA, servidor de teste). Tentando rede: " + String(ssid));
-#else
-    Serial.println("Modo estação (servidor de produção). Tentando rede: " + String(ssid));
-#endif
-    WiFi.begin(ssid, password);
-  }
-
-  // Proteção contra Loop Infinito (15 segundos de limite)
-  int tentativasWifi = 0;
-  while (WiFi.status() != WL_CONNECTED && tentativasWifi < 30) {
-    delay(500);
-    Serial.print(".");
-    tentativasWifi++;
-  }
+  // Conecta e, ao conectar, descobre em qual ambiente a placa está. Com o jumper nos pinos 0 e 4 vale
+  // a rede de programação e o ambiente da NVS é preservado. Ver ambiente.ino.
+  // A programação pela IDE via Wi-Fi fica habilitada em todos os modos (ver abaixo).
+  conectarAmbiente();
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nWi-Fi conectado em " + WiFi.SSID() + ", IP " + WiFi.localIP().toString());

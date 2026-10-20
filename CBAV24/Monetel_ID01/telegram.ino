@@ -138,11 +138,15 @@ void enviarMensagemBoot()
     m += "\nATENCAO: baixei a versao " + versaoRejeitada + ", mas o .bin publicado foi compilado com FW_VERSION " FW_VERSION ". Nao vou baixar a " + versaoRejeitada + " de novo. Corrija FW_VERSION no codigo, exporte e publique uma versao MAIOR.";
   }
   m += "\nVersao: " FW_VERSION;
-#if AMBIENTE_LAB
-  m += " | ambiente: LABORATORIO";
-#else
-  m += " | ambiente: ESTACAO";
-#endif
+  m += " | ambiente: " + String(nomeAmbiente(ambienteLab));
+  if (!ambienteDetectado)
+  {
+    m += " (mantido da NVS; nenhuma rede conhecida respondeu)";
+  }
+  else if (ambienteMudou)
+  {
+    m += " (MUDOU neste boot)";
+  }
   if (otaativ == 1)
   {
     m += " | JUMPER OTA (rede de programacao)";

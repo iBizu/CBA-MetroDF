@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Gera os binários das 4 variantes para os dois canais de OTA e os reúne em release/:
-#   release/estacao/  -> 4 .bin compilados com AMBIENTE_LAB=0 + versao.txt  (assets da release "latest")
-#   release/lab/      -> 4 .bin compilados com AMBIENTE_LAB=1 + versao.txt  (assets da release de tag "lab", pre-release)
+# Gera os binários das 4 variantes e os reúne em release/ para publicar nos canais de OTA:
+#   release/estacao/  -> 4 .bin + versao.txt  (assets da release "latest")
+#   release/lab/      -> 4 .bin + versao.txt  (assets da release de tag "lab", pre-release)
 # Uso (Git Bash, na raiz do clone):  ./gerar_release.sh [estacao|lab|ambos]   (padrão: ambos)
 # Requer o arduino-cli embutido na IDE 2 e o segredos.h em cada pasta de sketch.
+#
+# Desde a versão 8 existe UM binário por variante, igual nos dois canais: a placa descobre no boot
+# em qual ambiente está (ver conectarAmbiente() em ambiente.ino). O que separa bancada de estação
+# passou a ser a VERSÃO publicada em cada canal, não o conteúdo do .bin — publicar só em "lab"
+# continua sendo a forma de testar na bancada sem alcançar a estação.
 set -euo pipefail
 
 CLI="$HOME/AppData/Local/Programs/Arduino IDE/resources/app/lib/backend/resources/arduino-cli.exe"
@@ -17,60 +22,50 @@ versao_do_fonte() {  # lê FW_VERSION do sketch principal
   sed -n 's/^#define FW_VERSION "\([^"]*\)".*/\1/p' "$RAIZ/CBAV24/$1/$1.ino"
 }
 
-# Confere no binário pronto que ele saiu com a rede e o canal de OTA do ambiente certo.
-# É a última barreira antes de publicar: um binário do ambiente errado só se revela quando a
-# placa já está no lugar errado, sem rede para receber correção.
-conferir_binario() {  # $1 = arquivo, $2 = canal, $3 = variante
-  local arq="$1" canal="$2" v="$3" deve falta
-  if [ "$canal" = "estacao" ]; then
-    deve="POC_MANUTENCAO"; falta="10.66.24.196"
-  else
-    deve="10.66.24.196"; falta="POC_MANUTENCAO"
-  fi
-  if ! grep -qa "$deve" "$arq"; then
-    echo "ERRO: $v ($canal) nao contem '$deve' - binario do ambiente errado, abortando."; exit 1
-  fi
-  if grep -qa "$falta" "$arq"; then
-    echo "ERRO: $v ($canal) contem '$falta' - binario do ambiente errado, abortando."; exit 1
-  fi
-}
-
-gerar() {  # $1 = estacao|lab
-  local canal="$1" out="$RAIZ/release/$1"
-  # O ambiente é SEMPRE imposto por -D, nos dois canais. Antes o canal lab usava o valor do
-  # #define no fonte, e em 19/10/2026 o Wolpac foi publicado no canal lab com um binário de
-  # ESTAÇÃO, porque aquela variante estava com AMBIENTE_LAB 0 commitado. Uma placa de bancada
-  # que baixasse isso iria procurar a rede da estação e sumir. Com o -D explícito, o valor do
-  # fonte não influencia mais a release.
-  local amb
-  case "$canal" in
-    estacao) amb=0 ;;
-    lab)     amb=1 ;;
-    *) echo "ERRO: canal desconhecido '$canal'"; exit 1 ;;
-  esac
-  mkdir -p "$out"
-  local versao=""
-  for v in "${VARIANTES[@]}"; do
-    local fv; fv="$(versao_do_fonte "$v")"
-    if [ -n "$versao" ] && [ "$fv" != "$versao" ]; then
-      echo "ERRO: FW_VERSION difere entre as variantes ($versao vs $fv em $v)"; exit 1
+# Confere no binário pronto que ele é mesmo o de detecção automática: tem de carregar as DUAS redes
+# e os DOIS canais de OTA, porque é isso que permite à placa se adaptar ao lugar onde for ligada.
+# Um binário sem isso veio de um fonte antigo (ou de um -DAMBIENTE_LAB mal colocado) e serve a um
+# ambiente só — publicado no canal errado, a placa que o baixasse ficaria procurando a rede errada,
+# sem rede para receber correção. Foi o que aconteceu nas versões 5, 6 e 7 do canal lab.
+conferir_binario() {  # $1 = arquivo, $2 = variante
+  local arq="$1" v="$2" s
+  for s in POC_MANUTENCAO 10.66.24.196 "releases/latest/download/" "releases/download/lab/"; do
+    if ! grep -qa -- "$s" "$arq"; then
+      echo "ERRO: $v nao contem '$s' - nao e o binario de deteccao automatica, abortando."; exit 1
     fi
-    versao="$fv"
-    echo "== $canal / $v (FW_VERSION $fv, AMBIENTE_LAB=$amb)"
-    "$CLI" --config-file "$CFG" compile --fqbn "$FQBN" \
-      --build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=$amb" \
-      --build-path "$RAIZ/build/cli/${canal}_$v" \
-      --output-dir "$RAIZ/build/cli/${canal}_${v}_out" \
-      "$RAIZ/CBAV24/$v" 2>&1 | grep -E "Sketch uses|error" || true
-    cp "$RAIZ/build/cli/${canal}_${v}_out/$v.ino.bin" "$out/$v.ino.bin"
-    conferir_binario "$out/$v.ino.bin" "$canal" "$v"
   done
-  printf '%s\n' "$versao" > "$out/versao.txt"
-  echo "-> $out: $(ls "$out" | tr '\n' ' ')"
 }
 
-case "$CANAL" in
-  estacao|lab) gerar "$CANAL" ;;
-  ambos) gerar estacao; gerar lab ;;
-  *) echo "uso: $0 [estacao|lab|ambos]"; exit 1 ;;
-esac
+destinos() {  # pastas de saída conforme o canal pedido
+  case "$1" in
+    estacao) echo "estacao" ;;
+    lab)     echo "lab" ;;
+    ambos)   echo "estacao lab" ;;
+    *) echo "uso: $0 [estacao|lab|ambos]" >&2; exit 1 ;;
+  esac
+}
+
+SAIDAS="$(destinos "$CANAL")"
+for d in $SAIDAS; do mkdir -p "$RAIZ/release/$d"; done
+
+versao=""
+for v in "${VARIANTES[@]}"; do
+  fv="$(versao_do_fonte "$v")"
+  if [ -n "$versao" ] && [ "$fv" != "$versao" ]; then
+    echo "ERRO: FW_VERSION difere entre as variantes ($versao vs $fv em $v)"; exit 1
+  fi
+  versao="$fv"
+  echo "== $v (FW_VERSION $fv)"
+  "$CLI" --config-file "$CFG" compile --fqbn "$FQBN" \
+    --build-path "$RAIZ/build/cli/$v" \
+    --output-dir "$RAIZ/build/cli/${v}_out" \
+    "$RAIZ/CBAV24/$v" 2>&1 | grep -E "Sketch uses|error" || true
+  bin="$RAIZ/build/cli/${v}_out/$v.ino.bin"
+  conferir_binario "$bin" "$v"
+  for d in $SAIDAS; do cp "$bin" "$RAIZ/release/$d/$v.ino.bin"; done
+done
+
+for d in $SAIDAS; do
+  printf '%s\n' "$versao" > "$RAIZ/release/$d/versao.txt"
+  echo "-> release/$d: $(ls "$RAIZ/release/$d" | tr '\n' ' ')"
+done

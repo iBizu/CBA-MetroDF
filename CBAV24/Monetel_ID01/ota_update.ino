@@ -274,13 +274,15 @@ void executarAtualizacaoOTA(const char* origem)
 // Chamada no loop ocioso.
 void verificarHorarioOTA()
 {
-#if AMBIENTE_LAB
-  if (millis() - ultimaVerificacaoOTA >= (unsigned long)OTA_INTERVALO_MIN * 60000UL)
+  if (ambienteLab)
   {
-    ultimaVerificacaoOTA = millis();
-    executarAtualizacaoOTA("agendado");
+    if (millis() - ultimaVerificacaoOTA >= (unsigned long)OTA_INTERVALO_MIN * 60000UL)
+    {
+      ultimaVerificacaoOTA = millis();
+      executarAtualizacaoOTA("agendado");
+    }
+    return;
   }
-#else
   if (!relogioValido()) return;   // sem hora certa não dá para saber se a estação está fechada
   if (rtc.getHour(true) == OTA_HORA && rtc.getMinute() == OTA_MINUTO)
   {
@@ -294,5 +296,4 @@ void verificarHorarioOTA()
   {
     otaExecutadoNesteMinuto = false;
   }
-#endif
 }

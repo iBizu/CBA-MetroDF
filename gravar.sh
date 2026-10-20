@@ -10,7 +10,8 @@
 #
 # "lab" grava a configuração de bancada (WIFI-ARHD, servidor de teste, canal de OTA "lab").
 # "estacao" grava a de produção (POC_MANUTENCAO, servidor de produção, canal "latest").
-# O fonte no git fica sempre no padrão de bancada; "estacao" é aplicado só na compilação.
+# O ambiente é sempre aplicado na compilação, sem editar o arquivo: o padrão do #define no fonte
+# (hoje estação, desde fa9fbb4) não influencia o que esta gravação coloca na placa.
 set -euo pipefail
 
 CLI="$HOME/AppData/Local/Programs/Arduino IDE/resources/app/lib/backend/resources/arduino-cli.exe"
@@ -39,9 +40,13 @@ if [ ! -f "$RAIZ/CBAV24/$VARIANTE/segredos.h" ]; then
   echo "ERRO: falta CBAV24/$VARIANTE/segredos.h (copie de segredos.h.exemplo e preencha)"; exit 1
 fi
 
+# Os dois casos passam o -D explicitamente, nunca "o padrão do fonte". Enquanto a bancada era o
+# padrão, "lab" não passava nada; quando o fonte passou a compilar como estação (fa9fbb4), o mesmo
+# comando começou a gravar um build de ESTAÇÃO em silêncio, que é justamente o engano que este
+# script existe para evitar. O valor do #define no fonte não deve influenciar o que é gravado.
 declare -a extra=()
 case "$AMBIENTE" in
-  lab)     ;;  # padrão do fonte
+  lab)     extra=(--build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=1") ;;
   estacao) extra=(--build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0") ;;
   *) echo "ERRO: ambiente deve ser 'lab' ou 'estacao'"; exit 1 ;;
 esac

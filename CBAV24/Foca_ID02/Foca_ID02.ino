@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "8"
+#define FW_VERSION "9"
 #define OTA_ASSET  "Foca_ID02.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -45,6 +45,14 @@
 // Limite de cada tentativa de conexão, em segundos. No pior caso o boot gasta o dobro disto, quando
 // a placa mudou de lugar e a primeira rede tentada é a do lugar antigo.
 #define TEMPO_REDE_S 12
+
+// ---- Limpeza do backlog na gravacao ----
+// 0 = nada. Diferente de 0 = esta gravacao apaga LOGREG.csv e POSITION.txt no boot, uma vez.
+// NUNCA deve valer outra coisa que 0 no fonte: chega por -D, via  ./gravar.sh ... --limpar
+// Ver limparBacklogSolicitado() em ambiente.ino para as travas.
+#ifndef LIMPAR_BACKLOG
+#define LIMPAR_BACKLOG 0
+#endif
 
 int  numid = 2 ;  // id do dispositvo
 int tipoEntr = 2 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
@@ -427,6 +435,8 @@ else
   escreve = 0;        // seleciona escrever no SD
   cardID();    // chama função que que cria os arquivos txt no SD (se os mesmos já não estiverem criados)
   leId();    // chama função que lê arquivos no SD, para atualizar os contadores e ID de mensagem
+  limparBacklogSolicitado();   // ./gravar.sh ... --limpar: zera o cartao antes do campo
+  adotarAmbienteBacklog();   // backlog de antes desta protecao: assume o ambiente atual
 
   esp_task_wdt_reset(); //Reseta o temporizador do watchdog
   enviarMensagemBoot();   // Telegram: motivo do reinício / atualização / rollback, hora, SD, ambiente

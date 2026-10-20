@@ -100,3 +100,146 @@ void conectarAmbiente()
   Serial.println("[Alerta] Nenhuma rede conhecida respondeu. Mantendo " +
                  String(nomeAmbiente(ambienteLab)) + " e iniciando em modo OFFLINE.");
 }
+
+// --- Backlog que atravessou ambientes --------------------------------------------------------
+// Uma linha do LOGREG.csv guarda so "sentido;timestamp;": ela nao sabe para qual servidor era.
+// O atrasado() entrega o backlog ao host do ambiente em que a placa esta AGORA, entao uma placa
+// que acumulou passagens reais na estacao e foi trazida para o laboratorio despejaria essas
+// contagens no banco de teste, e o BI de producao nunca as receberia. No sentido inverso, giros
+// de bancada entrariam na producao como se fossem passageiros. Nos dois casos em silencio: as
+// linhas sao validas, o servidor responde 000 e elas somem do arquivo.
+//
+// Por isso o ambiente em que o backlog foi gravado fica na NVS (namespace "ambiente", chave
+// "backlog"). Se nao bate com o ambiente atual, o backlog NAO e enviado: a placa avisa na
+// mensagem de boot do Telegram e espera. Se voltar ao ambiente de origem, o registro passa a
+// bater e o backlog drena normalmente, sem perder contagem nenhuma — e por isso bloquear e
+// melhor que descartar.
+#define BACKLOG_SEM_ORIGEM (-1)
+#define BACKLOG_MISTO        2
+
+const char* nomeOrigemBacklog(int origem)
+{
+  if (origem == BACKLOG_MISTO) return "MISTO";
+  return nomeAmbiente(origem);
+}
+
+// Origem do backlog atual, ou BACKLOG_SEM_ORIGEM se nao houver marca.
+int ambienteDoBacklog()
+{
+  prefsCBA.begin("ambiente", true);
+  int origem = prefsCBA.getInt("backlog", BACKLOG_SEM_ORIGEM);
+  prefsCBA.end();
+  return origem;
+}
+
+// Chamada pelo card() ao acrescentar uma linha ao LOGREG.csv. So escreve na NVS quando o valor
+// muda, para nao gastar o flash a cada passagem perdida.
+// Se ja havia backlog de OUTRO ambiente, o arquivo passa a ter linhas das duas origens e nao da
+// mais para rotear por arquivo: marca MISTO, que fica bloqueado sempre, e a decisao vira humana.
+void marcarAmbienteBacklog()
+{
+  int origem = ambienteDoBacklog();
+  if (origem == ambienteLab || origem == BACKLOG_MISTO) return;
+  int novo = (origem == BACKLOG_SEM_ORIGEM) ? ambienteLab : BACKLOG_MISTO;
+  prefsCBA.begin("ambiente", false);
+  prefsCBA.putInt("backlog", novo);
+  prefsCBA.end();
+  if (novo == BACKLOG_MISTO)
+  {
+    Serial.println("[SD] Backlog passou a ter linhas de dois ambientes: marcado MISTO.");
+  }
+}
+
+// Chamada quando o LOGREG.csv acabou de ser drenado ou apagado: nao ha mais backlog a proteger.
+void limparAmbienteBacklog()
+{
+  if (ambienteDoBacklog() == BACKLOG_SEM_ORIGEM) return;
+  prefsCBA.begin("ambiente", false);
+  prefsCBA.remove("backlog");
+  prefsCBA.end();
+}
+
+// Backlog que ja estava no cartao antes desta protecao nao tem origem marcada. No primeiro boot
+// assume o ambiente atual, que e onde ele foi acumulado; a partir dai a protecao vale. Sem isto
+// essas linhas ficariam sem origem para sempre e nunca seriam protegidas.
+// Chamada no setup(), depois do leId(), que e quem define flagSD.
+void adotarAmbienteBacklog()
+{
+  if (flagSD != 1) return;                                   // nao ha backlog
+  if (ambienteDoBacklog() != BACKLOG_SEM_ORIGEM) return;     // ja tem origem
+  prefsCBA.begin("ambiente", false);
+  prefsCBA.putInt("backlog", ambienteLab);
+  prefsCBA.end();
+  Serial.println("[SD] Backlog sem origem marcada: assumindo " + String(nomeAmbiente(ambienteLab)) + ".");
+}
+
+// true = ha backlog gravado em outro ambiente; o atrasado() nao deve enviar.
+bool backlogDeOutroAmbiente()
+{
+  int origem = ambienteDoBacklog();
+  if (origem == BACKLOG_SEM_ORIGEM || origem == ambienteLab) return false;
+  Serial.println("[SD] Backlog gravado em " + String(nomeOrigemBacklog(origem)) +
+                 " e a placa esta em " + String(nomeAmbiente(ambienteLab)) +
+                 ": nao vou enviar, iria para o servidor errado.");
+  return true;
+}
+
+// --- Limpeza do backlog pedida na gravacao ----------------------------------------------------
+// Zera um cartao com linhas de teste antes de a placa ir a campo:
+//   ./gravar.sh <Variante> <PORTA> estacao --limpar
+// Apaga LOGREG.csv E POSITION.txt JUNTOS, pelo mesmo protocolo (escreve/flagP) que o atrasado()
+// usa. Apagar so um deixa o POSITION apontando para dentro de um arquivo que nao existe mais; o
+// seek() cai no meio de uma linha e um pedaco de timestamp vira o "sentido" — foi assim que um
+// sentido 62 chegou ao banco de teste em 24/09/2026.
+//
+// Tres travas, porque isto apaga contagens:
+// 1. LIMPAR_BACKLOG nunca vale outra coisa que 0 no fonte; so chega por -D numa gravacao por USB.
+// 2. Com a flag armada o binario carrega a marca CBA_LIMPAR_BACKLOG_ARMADO, e o gerar_release.sh
+//    ABORTA se a encontrar. Uma placa que baixasse por OTA um binario com isto apagaria o proprio
+//    backlog a cada gravacao nova — contagens reais perdidas em silencio, sem ninguem pedir.
+// 3. O valor e o instante da gravacao, nao um "1": a limpeza so roda se for diferente do que esta
+//    na NVS. Um reboot nao limpa de novo; uma nova gravacao com --limpar limpa.
+void limparBacklogSolicitado()
+{
+#if LIMPAR_BACKLOG
+  Serial.println("[SD] CBA_LIMPAR_BACKLOG_ARMADO: gravado com a limpeza de backlog pedida.");
+  prefsCBA.begin("ambiente", false);
+  long long jaFeita = prefsCBA.getLong64("limpou", 0);
+  prefsCBA.end();
+  if (jaFeita == (long long)LIMPAR_BACKLOG)
+  {
+    Serial.println("[SD] A limpeza desta gravacao ja foi executada; nada a fazer.");
+    return;
+  }
+
+  long pendentes = contarPendentesSD();   // conta antes de apagar, para o aviso dizer quanto foi
+
+  escreve = 1;
+  card("");            // apaga LOGREG.csv (e limpa a marca de origem do backlog)
+  escreve = 0;
+  if (flagF == 1)
+  {
+    Serial.println("[SD] LIMPEZA FALHOU: cartao nao respondeu. Nao marco como feita; tenta no proximo boot.");
+    return;
+  }
+
+  nextposition = 0;
+  flagP = 1;
+  escreve = 1;
+  cardID();            // apaga POSITION.txt
+  escreve = 0;
+  cardID();            // regrava POSITION.txt com nextposition = 0
+  flagP = 0;
+  flagSD = 0;          // nao ha mais backlog a enviar neste boot
+  esp_task_wdt_reset(); //Reseta o temporizador do watchdog
+
+  prefsCBA.begin("ambiente", false);
+  prefsCBA.putLong64("limpou", (long long)LIMPAR_BACKLOG);
+  prefsCBA.end();
+
+  Serial.println("[SD] Backlog limpo: " + String(pendentes) + " linha(s) descartada(s).");
+  agendarTelegram(cabecalhoTelegram() +
+    "\nLIMPEZA pedida na gravacao: LOGREG.csv e POSITION.txt apagados. " +
+    String(pendentes) + " contagem(ns) pendente(s) DESCARTADA(S).");
+#endif
+}

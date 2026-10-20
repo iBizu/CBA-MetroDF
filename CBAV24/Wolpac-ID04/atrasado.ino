@@ -20,6 +20,10 @@ bool backlogValido(const String& sentidoLinha, const String& timestampLinha)
 //Função que envia dados armazenados no Sd para o coordenador  
 void atrasado() 
 {   
+   // Backlog gravado em outro ambiente nao e enviado: iria para o servidor errado.
+   // Ver o bloco sobre backlog em ambiente.ino.
+   if (backlogDeOutroAmbiente()) return;
+
    Serial.println( " Inicio do envio de atrasados 2: " + String(rtc.getTime("%d/%m/%y   %T") ) );  // mostra timestamp atual
 
   auxatra = 0 ;
@@ -155,6 +159,7 @@ void atrasado()
     SD.end();   
     nextposition = 0;  // reseta nextposition
     flagSD = 0;   // flag para informar que não existe informação no SD que deve ser enviada ao coordenador// finaliza a comunicação com cartão SD
+    limparAmbienteBacklog();   // LOGREG.csv drenado: nao ha mais origem a proteger
     flagP = 1;   // flag par ainformar que existe informção a ser gravada em POSITION.txt
     escreve = 1;   // seleciona apagar no cartão SD
     cardID();   // chama função cardID para apagar o arquivo POSITION.txt no cartão SD   

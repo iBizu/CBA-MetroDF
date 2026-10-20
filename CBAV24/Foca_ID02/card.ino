@@ -45,10 +45,12 @@ void card(String stamp)
       if (escreve == 0)  // se a váriavel escreve está selecionada como escrever arquivo
       { 
           Serial.println("\n LogReg Gravado! "); // imprime mensagem na porta serial      
+          marcarAmbienteBacklog();   // registra em qual ambiente esta linha foi gravada
       }   
       if (escreve == 1)   // se a váriavel escreve está selecionada como apagar arquivo
       { 
         Serial.println("\n Logreg Apagado! "); // imprime mensagem na porta serial      }   
+        limparAmbienteBacklog();   // LOGREG.csv apagado: nao ha mais origem a proteger
       }    
       root.close();  // close() fecha o arquivo e garante que informação escrita seja salva fisicamente no cartão SD
     

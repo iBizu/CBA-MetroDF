@@ -34,6 +34,11 @@ conferir_binario() {  # $1 = arquivo, $2 = variante
       echo "ERRO: $v nao contem '$s' - nao e o binario de deteccao automatica, abortando."; exit 1
     fi
   done
+  # E nao pode, de jeito nenhum, carregar a limpeza de backlog de ./gravar.sh --limpar: uma placa
+  # que baixasse isto por OTA apagaria as proprias contagens pendentes, sem ninguem pedir.
+  if grep -qa -- "CBA_LIMPAR_BACKLOG_ARMADO" "$arq"; then
+    echo "ERRO: $v contem a marca de limpeza de backlog (-DLIMPAR_BACKLOG) - isto NAO vai para release, abortando."; exit 1
+  fi
 }
 
 destinos() {  # pastas de saída conforme o canal pedido

@@ -23,7 +23,9 @@ CLI="$HOME/AppData/Local/Programs/Arduino IDE/resources/app/lib/backend/resource
 "$CLI" --config-file "$HOME/.arduinoIDE/arduino-cli.yaml" compile --fqbn esp32:esp32:esp32 CBAV24/Monetel_ID01
 ```
 
-Serial upload: `./gravar.sh <Variante> <PORTA> [lab|estacao]` (`./gravar.sh --portas` lists boards) compiles and flashes over USB, applying the station override without touching the source. Network (ArduinoOTA) upload: `upload --protocol network -p <device-ip>`; the device advertises itself under the `nomeota` hostname, and the IDE network port works in every mode.
+Serial upload: `./gravar.sh <Variante> <PORTA> [lab|estacao] [--limpar]` (`./gravar.sh --portas` lists boards) compiles and flashes over USB, applying the environment seed without touching the source.
+
+`--limpar` **deletes counts**: it arms `-DLIMPAR_BACKLOG=<epoch of the flash>`, and on the first boot the board wipes `LOGREG.csv` and `POSITION.txt` together (the two must always go together — deleting only one is what produced the `sentido 62`), rewrites `POSITION.txt` at zero and reports on Telegram how many pending counts it discarded. Use it only when the card's pending lines are disposable, e.g. clearing bench turns off a board before it leaves for the station. Three guards: the flag is `#ifndef`/`0` so it never exists in the source; an armed binary carries the string `CBA_LIMPAR_BACKLOG_ARMADO` and `conferir_binario` **aborts** on it, so it can never reach a release and be pulled over OTA; and the value is the flash's timestamp compared against NVS `ambiente/limpou`, so a reboot does not wipe again while a fresh `--limpar` flash does. If the card does not answer, the cleanup is not marked done and retries next boot. Network (ArduinoOTA) upload: `upload --protocol network -p <device-ip>`; the device advertises itself under the `nomeota` hostname, and the IDE network port works in every mode.
 
 **Bench gotcha:** with `teste = 0` the model comes from the jumpers on `PIN_MOD1`/`PIN_MOD2` (GPIO32/33) — exactly one must read HIGH, or `setup()` prints "Erro ao habilitar modelo" and reboots every 5 s forever. On a bare bench board set `teste = 1`, which uses the `modelo` already in each variant's editable block (Monetel `2`, the others `1`).
 
@@ -40,7 +42,7 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 
 State as of 2026-10-20: the published version is `7`, promoted to **latest** on 2026-10-20 (`gh release edit 7 --latest`) — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones, and `7` is the first release with the millisecond timestamp. Right after the promotion GitHub's edge cache was still answering the old `versao.txt` on the plain `releases/latest/download/` URL; it had caught up the same day, and `latest`, tag `7` and tag `lab` all answer `7` (checked 2026-10-20). A stale read there is harmless anyway, because the firmware refuses downgrades. Earlier releases were superseded before any board consumed them.
 
-Version `8` (environment detection) exists only on the `auto-ambiente` branch: compiled and statically checked on all four variants, **not yet flashed to a board and not published to either channel**. Before publishing it, run the bench test that matters for it — power the lab AP down and confirm the board keeps the environment it had instead of flipping — and publish to `lab` first, never straight to `latest`.
+Version `9` exists only on the `auto-ambiente` branch: compiled and `conferir_binario`-checked on all four variants, with environment detection validated end to end on the bench (Garen, 2026-10-20) and the backlog guard **not yet exercised on hardware**. Not published to either channel. Publish to `lab` first, never straight to `latest`. It carries three things over `7`: environment detection, the `tempo()` reconnect fix, and the cross-environment backlog guard.
 
 Validated on the bench 2026-09-23 (Wolpac): counting, the full OTA cycle (`4` → `5`, download, reboot, `Primeiro boot apos atualizacao: imagem confirmada`, Telegram `ATUALIZADO`), and the stuck-state watchdog restoring the scheduled OTA check. To force an OTA test, temporarily lower that variant's `FW_VERSION` below the channel's, flash over USB, and restore it afterwards — all four must share one version or `gerar_release.sh` refuses.
 
@@ -48,7 +50,7 @@ All four boards came back to the lab on 2026-09-22 for testing, so every one of 
 
 **Since version 8 a board no longer has to be reflashed when it changes place** — it detects the environment at boot (see *Environment detection*). The third argument of `gravar.sh` now only seeds the NVS, which detection would correct anyway. Still check the Telegram boot message: it says which environment the board settled on.
 
-**Since version 8 there is one binary per variant, identical in both channels.** What separates bench from station is the **version** published in each channel, not the content of the `.bin`, so publishing only to `lab` is still how a build is tested without reaching the station. `conferir_binario` in `gerar_release.sh` changed accordingly: it now asserts each binary carries **both** networks and **both** OTA URLs, i.e. that it really is the auto-detecting build, and aborts otherwise.
+**Since version 8 there is one binary per variant, identical in both channels.** What separates bench from station is the **version** published in each channel, not the content of the `.bin`, so publishing only to `lab` is still how a build is tested without reaching the station. `conferir_binario` in `gerar_release.sh` changed accordingly: it now asserts each binary carries **both** networks and **both** OTA URLs, i.e. that it really is the auto-detecting build, and that it does **not** carry `CBA_LIMPAR_BACKLOG_ARMADO`; it aborts otherwise.
 
 The old check did the opposite — it required the station binary *not* to contain the test host — and it existed because that went wrong: the Wolpac sat with `AMBIENTE_LAB 0` committed from 2026-09-23 (flashed for the station, the edited define swept in by a `git add -A`), the lab channel built from the source default, and releases `5`, `6` and `7` shipped a **station** Wolpac on the lab channel. A bench board that pulled it went looking for `POC_MANUTENCAO` and disappeared, with no network left to receive a fix over the air. That failure mode is now structurally gone: there is no such thing as a binary belonging to the wrong environment.
 
@@ -65,6 +67,18 @@ Connecting is the test rather than a scan because **`POC_MANUTENCAO` is a hidden
 - The environment lands in NVS namespace `"ambiente"`, key `"lab"`, and the Telegram boot message states it, whether it was confirmed by a connection or only kept from NVS, and whether it **changed** this boot. That message is the operator's confirmation.
 
 What this removes: the "reflash it before it goes back" step, and with it the two incidents it caused (the `AMBIENTE_LAB 0` swept into a commit and published to the `lab` channel; the Wolpac that sat mute on the bench). A binary is no longer right or wrong for a place.
+
+Validated on the bench with the Garen on 2026-10-20, all three paths: seeded `estacao` in the lab it spent ~12 s on `POC_MANUTENCAO`, connected to `WIFI-ARHD`, and wrote `bancada` to NVS; the next boot went straight there with no `(MUDOU)`; and with `WIFI_LAB_SSID` temporarily pointed at a nonexistent name, neither network answered and it **kept** `LABORATORIO` instead of flipping.
+
+### The backlog crosses environments (version 9)
+
+A `LOGREG.csv` line is only `sentido;timestamp;` — it does not record which server it was for, and `atrasado()` delivers it to whatever `host` the current environment set. So a board that banked real passages at the station and then came to the bench would push them to the **test** server (the BI never sees them), and a board carrying bench turns to the station would push those into **production** as if they were passengers. Silently, both ways: the lines are valid, the server answers `000`, and they leave the file.
+
+So the environment the backlog was written in lives in NVS (`ambiente/backlog`), and `atrasado()` refuses to send when it does not match the current one:
+
+- **Blocked, not discarded.** Take the board back to the environment the lines came from and the marker matches again, so they drain normally. Nothing is lost, it just waits. The Telegram boot message reports the held count and what to do.
+- **Legacy backlog** (written before this guard, so unmarked) adopts the current environment on the first boot, in `adotarAmbienteBacklog()` — which is where it was accumulated.
+- **Mixed origins**: if a blocked board banks *new* failures locally, the file holds lines from two environments and per-file routing cannot sort them. It is marked `MISTO`, blocked permanently, and the decision becomes explicitly human instead of the firmware picking the wrong server for half the lines.
 
 Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `FW_VERSION` of those binaries). `./gerar_release.sh [estacao|lab|ambos]` (Git Bash, repo root) builds everything into `release/estacao/` and `release/lab/` — station binaries are built with `--build-property "compiler.cpp.extra_flags=-DAMBIENTE_LAB=0"`, so the committed source keeps the lab default (`#ifndef AMBIENTE_LAB`). Upload the folder's contents as the release assets; `release/` and `build/` are gitignored. Bump `FW_VERSION` in all four sketches before building, and keep it identical across them (the script refuses otherwise). `Sketch > Export Compiled Binary` in the IDE also works (writes `<Variant>/build/esp32.esp32.esp32/<Variant>.ino.bin`), but only for whatever `AMBIENTE_LAB` the source currently says.
 
@@ -122,7 +136,7 @@ Arduino concatenates every `.ino` in a folder into one translation unit (main sk
 | `ota_update.ino` | TZ, GitHub version check + `HTTPUpdate`, rollback bookkeeping (`verificarEstadoOTA`) |
 | `telegram.ino` | `enviarTelegram`/`agendarTelegram`, reset reason, boot message |
 | `resumo.ino` | periodic summary, `contarPendentesSD()`, `tarefasOciosas()` |
-| `ambiente.ino` | `conectarAmbiente()`: detects the environment at boot by trying to connect, and `aplicarAmbiente()`, which points `ssid`/`password`/`host`/`url_*` at it |
+| `ambiente.ino` | `conectarAmbiente()`: detects the environment at boot by trying to connect, and `aplicarAmbiente()`, which points `ssid`/`password`/`host`/`url_*` at it. Also the cross-environment backlog guard and `limparBacklogSolicitado()` |
 | `rollback_hook.cpp` | `verifyRollbackLater()` → true (C linkage) |
 | `checkNVS.ino`, `fail.ino`, `falhou.ino` | NVS integrity check at boot; SD-failure flag reset / alert |
 
@@ -149,7 +163,7 @@ Every SD access is wrapped in `digitalWrite(SD_CS, Select)` → `SD.begin(...)` 
 
 `cardID()`/`leId()` are driven by a flag protocol rather than arguments: `flagE/flagS/flagW/flagP` (`0` skip, `1` increment/write, `2` create-and-read) and `escreve` (`0` write, `1` delete). A counter update is always "delete file, then rewrite" (`escreve = 1; cardID(); escreve = 0; cardID();`). `flagF = 1` means the last SD access failed; `fail()` resets all flags to `2` so the next successful mount recreates everything.
 
-NVS namespace `"my-app"`, key `counterF`: number of passages lost because both the server and the SD failed. It is sent later by `atrasado()` with `debug = 0x06` and cleared on acknowledgment. Namespaces `"ota"` (`tentada`, `rejeitada`, `versao`), `"resumo"` (`E`, `S`, `W`) and `"ambiente"` (`lab`: the last confirmed environment) are accessed through the second `Preferences` instance `prefsCBA` because `preferences` stays open on `"my-app"` for the whole loop iteration.
+NVS namespace `"my-app"`, key `counterF`: number of passages lost because both the server and the SD failed. It is sent later by `atrasado()` with `debug = 0x06` and cleared on acknowledgment. Namespaces `"ota"` (`tentada`, `rejeitada`, `versao`), `"resumo"` (`E`, `S`, `W`) and `"ambiente"` (`lab`: the last confirmed environment; `backlog`: the environment the pending SD lines were written in, or `2` for mixed; `limpou`: which `--limpar` flash has already run) are accessed through the second `Preferences` instance `prefsCBA` because `preferences` stays open on `"my-app"` for the whole loop iteration.
 
 `resposta` is a three-digit string state: `"999"` idle, `"000"` server acknowledged, `"111"` awaiting ack / write to SD, `"222"` send failed. `debug` byte values are documented inline in `<Variant>.ino`.
 

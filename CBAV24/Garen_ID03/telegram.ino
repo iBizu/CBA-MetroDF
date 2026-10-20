@@ -155,6 +155,14 @@ void enviarMensagemBoot()
   m += "\nWi-Fi: " + WiFi.SSID() + " " + WiFi.localIP().toString() + " (" + String(WiFi.RSSI()) + " dBm)";
   m += "\nHora da placa: " + rtc.getTime("%d/%m/%y %T") + (relogioValido() ? "" : " (RELOGIO INVALIDO)");
   m += "\nSD: " + String(flagF == 0 ? "ok" : "FALHOU") + " | pendentes no SD: " + String(flagSD == 1 ? "sim" : "nao") + " | perdidas na flash: " + String(perdidasFlash);
+  int origemBacklog = ambienteDoBacklog();
+  if (origemBacklog != BACKLOG_SEM_ORIGEM && origemBacklog != ambienteLab)
+  {
+    m += "\nATENCAO: " + String(contarPendentesSD()) + " contagem(ns) pendente(s) no SD foram gravadas em " +
+         nomeOrigemBacklog(origemBacklog) + ", mas a placa esta em " + nomeAmbiente(ambienteLab) +
+         ". NAO vou envia-las, para nao lancar no servidor errado. Leve a placa de volta para " +
+         nomeOrigemBacklog(origemBacklog) + " para que sejam enviadas, ou apague LOGREG.csv E POSITION.txt do cartao (os dois juntos) para descartar.";
+  }
 
   if (WiFi.status() == WL_CONNECTED)
   {

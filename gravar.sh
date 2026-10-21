@@ -34,8 +34,9 @@ PORTA="${2:-}"
 AMBIENTE="${3:-lab}"
 
 if [ -z "$VARIANTE" ] || [ -z "$PORTA" ]; then
-  echo "uso: $0 <Variante> <PORTA> [lab|estacao]   |   $0 --portas"
+  echo "uso: $0 <Variante> <PORTA> [lab|estacao] [--limpar]   |   $0 --portas"
   echo "variantes: Monetel_ID01  Foca_ID02  Garen_ID03  Wolpac-ID04"
+  echo "--limpar apaga LOGREG.csv e POSITION.txt do cartao no primeiro boot (exige o 3o argumento)"
   exit 1
 fi
 if [ ! -d "$RAIZ/CBAV24/$VARIANTE" ]; then

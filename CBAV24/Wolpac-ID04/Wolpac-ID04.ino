@@ -46,14 +46,6 @@
 // a placa mudou de lugar e a primeira rede tentada é a do lugar antigo.
 #define TEMPO_REDE_S 12
 
-// ---- Limpeza do backlog na gravacao ----
-// 0 = nada. Diferente de 0 = esta gravacao apaga LOGREG.csv e POSITION.txt no boot, uma vez.
-// NUNCA deve valer outra coisa que 0 no fonte: chega por -D, via  ./gravar.sh ... --limpar
-// Ver limparBacklogSolicitado() em ambiente.ino para as travas.
-#ifndef LIMPAR_BACKLOG
-#define LIMPAR_BACKLOG 0
-#endif
-
 int  numid = 4 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel
 int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme modelo habilitado fisicamente pelos pinos , 1 - para testes, vai ignorar a definição dos pinos e usar o modelo definido na váriavel abaixo
@@ -439,7 +431,6 @@ else
   escreve = 0;        // seleciona escrever no SD
   cardID();    // chama função que que cria os arquivos txt no SD (se os mesmos já não estiverem criados)
   leId();    // chama função que lê arquivos no SD, para atualizar os contadores e ID de mensagem
-  limparBacklogSolicitado();   // ./gravar.sh ... --limpar: zera o cartao antes do campo
   adotarAmbienteBacklog();   // backlog de antes desta protecao: assume o ambiente atual
 
   esp_task_wdt_reset(); //Reseta o temporizador do watchdog

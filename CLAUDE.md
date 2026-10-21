@@ -66,7 +66,13 @@ Connecting is the test rather than a scan because **`POC_MANUTENCAO` is a hidden
 
 What this removes: the "reflash it before it goes back" step, and with it the two incidents it caused (the `AMBIENTE_LAB 0` swept into a commit and published to the `lab` channel; the Wolpac that sat mute on the bench). A binary is no longer right or wrong for a place.
 
-Validated on the bench with the Garen on 2026-10-20, all three paths: seeded `estacao` in the lab it spent ~12 s on `POC_MANUTENCAO`, connected to `WIFI-ARHD`, and wrote `bancada` to NVS; the next boot went straight there with no `(MUDOU)`; and with `WIFI_LAB_SSID` temporarily pointed at a nonexistent name, neither network answered and it **kept** `LABORATORIO` instead of flipping.
+Validated on the bench with the Garen on 2026-10-20 and 2026-10-21, all three paths: seeded `estacao` in the lab it spent ~12 s on `POC_MANUTENCAO`, connected to `WIFI-ARHD`, and wrote `bancada` to NVS; the next boot went straight there with no `(MUDOU)`; and with `WIFI_LAB_SSID` temporarily pointed at a nonexistent name, neither network answered and it **kept** `LABORATORIO` instead of flipping. Pointing a gitignored `segredos.h` SSID at a bogus name is the cheap way to exercise these paths without touching the AP.
+
+**`TEMPO_REDE_S` was raised from 12 s to 20 s on 2026-10-21**, because 12 was not enough. The Garen read `WIFI-ARHD` as absent across the full 12 s and fell into "neither network answered", yet was associated to it seconds later: the boot message said `ambiente: LABORATORIO (mantido da NVS; nenhuma rede conhecida respondeu)` while the board was sitting at `192.168.0.20`. Boots that connected in ~2 s had RSSI -65/-66 dBm; that one was -71.
+
+A present network misread as absent matters more here than anywhere else, because this is the **decision** about which environment the board is in. A freshly flashed board arriving at the station would keep the bench seed and point at the test server until some later boot managed to associate inside the window. It self-heals across reboots, but wide margin is cheap — it costs boot time, and only when a network really is missing.
+
+`tempo()`'s own 10 s attempt was left alone: `sincronizarRelogio()` retries it eight times, and an association that completes after one attempt gives up is picked up by the next one, which is exactly what that log shows (attempt 1 timed out, attempt 2 found the board already connected).
 
 ### The backlog crosses environments (version 9)
 
@@ -91,7 +97,7 @@ Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `
 | `FW_VERSION` | this build's version (plain integers: `"7"` as of 2026-10-19). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
 | `AMBIENTE_LAB` | **only the seed** for the environment the board assumes on its very first boot with empty NVS, and the one it keeps when neither network answers. The environment itself is detected at runtime — see *Environment detection* below. Still guarded by `#ifndef`, so `gravar.sh`/`gerar_release.sh` can set the seed on the command line without editing the file |
-| `TEMPO_REDE_S` | seconds allowed for each connection attempt (`12`). Worst-case boot spends twice this, when the board has moved and the remembered network is tried first |
+| `TEMPO_REDE_S` | seconds allowed for each connection attempt (`20`). Worst-case boot spends twice this, when the board has moved and the remembered network is tried first. It was `12` and that was not enough — see the bench note below |
 | `numid` | device id sent in every message (1–4) |
 | `tipoEntr` | sensor electrical type: `1` analog voltage divider (Garen, Wolpac), `2` digital/Zener (Foca). Ignored for Monetel |
 | `modelo` | turnstile mechanics: `1` = 4 quarter-turns per passage (Foca/Garen/Wolpac), `2` = 2 half-turns (Ascom/Monetel). Only honored when `teste = 1`; otherwise auto-detected from hardware jumpers at boot |

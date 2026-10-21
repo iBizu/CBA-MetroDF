@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "9"
+#define FW_VERSION "10"
 #define OTA_ASSET  "Garen_ID03.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -44,7 +44,12 @@
 
 // Limite de cada tentativa de conexão, em segundos. No pior caso o boot gasta o dobro disto, quando
 // a placa mudou de lugar e a primeira rede tentada é a do lugar antigo.
-#define TEMPO_REDE_S 12
+// Era 12 e NÃO bastava: em 21/10/2026 o Garen leu a WIFI-ARHD como ausente nos 12 s e caiu no
+// "nenhuma rede respondeu", mas segundos depois estava associado nela. Com sinal bom (-65 dBm) a
+// associação levava 2 s; naquele boot o sinal era -71 dBm. Uma rede presente lida como ausente é
+// grave aqui, porque é disso que sai a DECISÃO de ambiente: uma placa recém-gravada chegando na
+// estação ficaria apontada para o servidor de teste. Margem larga é barata, custa só tempo de boot.
+#define TEMPO_REDE_S 20
 
 int  numid = 3 ;  // id do dispositvo
 int tipoEntr = 1 ; // 1 - divisor de tensão (garen,wolpac, 2 fios), 2 - Zener (Foca, switch, dois fios), Ascom/Monetel é indiferente a esta variavel

@@ -161,6 +161,11 @@ Every SD access is wrapped in `digitalWrite(SD_CS, Select)` → `SD.begin(...)` 
 - `ENTRADAS.txt`, `SAIDAS.txt`, `ERROS.txt` — running totals (single integer)
 - `POSITION.txt` — byte offset in `LOGREG.csv` up to which `atrasado()` has already replayed
 
+Those five are the **only** files the firmware opens — `grep "SD.open(\|SD.remove("` over the tabs returns nothing else. Two stale things a card and the comments will show you anyway:
+
+- **`ID.txt` on a card is dead data.** Cards in service carry one (content = the zero-padded `numid`, e.g. `003` on the Garen), left by pre-rework firmware. Nothing in the current code reads, writes or deletes it. Safe to leave or remove; it is not part of any protocol.
+- The header comments in `cardID.ino` and `leId.ino`, and the `debug` legend in `<Variant>.ino`, still describe a **`MSGID.txt`** holding "the id of the last message sent". That file is never created or read either — the comments outlived the feature. Do not implement against them.
+
 `cardID()`/`leId()` are driven by a flag protocol rather than arguments: `flagE/flagS/flagW/flagP` (`0` skip, `1` increment/write, `2` create-and-read) and `escreve` (`0` write, `1` delete). A counter update is always "delete file, then rewrite" (`escreve = 1; cardID(); escreve = 0; cardID();`). `flagF = 1` means the last SD access failed; `fail()` resets all flags to `2` so the next successful mount recreates everything.
 
 NVS namespace `"my-app"`, key `counterF`: number of passages lost because both the server and the SD failed. It is sent later by `atrasado()` with `debug = 0x06` and cleared on acknowledgment. Namespaces `"ota"` (`tentada`, `rejeitada`, `versao`), `"resumo"` (`E`, `S`, `W`) and `"ambiente"` (`lab`: the last confirmed environment; `backlog`: the environment the pending SD lines were written in, or `2` for mixed) are accessed through the second `Preferences` instance `prefsCBA` because `preferences` stays open on `"my-app"` for the whole loop iteration.

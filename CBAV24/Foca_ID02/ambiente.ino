@@ -165,7 +165,21 @@ void limparAmbienteBacklog()
 // Chamada no setup(), depois do leId(), que e quem define flagSD.
 void adotarAmbienteBacklog()
 {
-  if (flagSD != 1) return;                                   // nao ha backlog
+  // flagSD so quer dizer algo se o cartao respondeu: o fail() nao mexe nela, entao depois de uma
+  // falha de monta ela ainda guarda o valor da leitura anterior.
+  if (flagF != 0) return;                                    // cartao nao respondeu: nao concluir nada
+  if (flagSD != 1)                                           // nao ha backlog
+  {
+    // Marca orfa: o LOGREG.csv foi apagado na mao, que e como o cartao se limpa aqui. Deixar a
+    // marca faria a proxima passagem perdida ser lida como uma SEGUNDA origem, e o arquivo seria
+    // marcado MISTO -- bloqueado para sempre, tendo uma origem so.
+    if (ambienteDoBacklog() != BACKLOG_SEM_ORIGEM)
+    {
+      limparAmbienteBacklog();
+      Serial.println("[SD] Nao ha backlog, mas havia marca de origem: marca removida.");
+    }
+    return;
+  }
   if (ambienteDoBacklog() != BACKLOG_SEM_ORIGEM) return;     // ja tem origem
   prefsCBA.begin("ambiente", false);
   prefsCBA.putInt("backlog", ambienteLab);

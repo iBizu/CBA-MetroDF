@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "10"
+#define FW_VERSION "11"
 #define OTA_ASSET  "Monetel_ID01.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -392,7 +392,7 @@ if (teste == 0)  // se não é teste
 if (estadoMod1 == HIGH  && estadoMod2 == LOW  ) // verifica qual modelo está sendo habilitado
 {
   modelo = 1;  // define modelo tipo foca
-  Serial.println("\nModelo 1 - Foca "); // imprime mensagem na porta serial
+  Serial.println("\nModelo 1 - Foca/Garen/Wolpac "); // imprime mensagem na porta serial
 }
 
 else if (estadoMod1 == LOW  && estadoMod2 == HIGH ) // verifica qual modelo está sendo habilitado

@@ -40,7 +40,13 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 
 State as of 2026-10-20: the published version is `7`, promoted to **latest** on 2026-10-20 (`gh release edit 7 --latest`) — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones, and `7` is the first release with the millisecond timestamp. Right after the promotion GitHub's edge cache was still answering the old `versao.txt` on the plain `releases/latest/download/` URL; it had caught up the same day, and `latest`, tag `7` and tag `lab` all answer `7` (checked 2026-10-20). A stale read there is harmless anyway, because the firmware refuses downgrades. Earlier releases were superseded before any board consumed them.
 
-Version `9` exists only on the `auto-ambiente` branch: compiled and `conferir_binario`-checked on all four variants, with environment detection validated end to end on the bench (Garen, 2026-10-20) and the backlog guard **not yet exercised on hardware**. Not published to either channel. Publish to `lab` first, never straight to `latest`. It carries three things over `7`: environment detection, the `tempo()` reconnect fix, and the cross-environment backlog guard.
+**Channel state (2026-10-21): `lab` carries `10`, `latest` is still `7`.** Version `10` reached the bench Garen over the air: the board was on `9`, read `10` on the first scheduled check after the upload, downloaded, rebooted, logged `Primeiro boot apos atualizacao: imagem confirmada` and announced `ATUALIZADO: 9 -> 10` on Telegram. The ~3 h of `Versao na nuvem: 7` before that upload, each refused as a downgrade, came free with it. What `10` carries over `7`: environment detection, the `tempo()` reconnect fix, the cross-environment backlog guard, and `TEMPO_REDE_S` at 20 s.
+
+**`latest` stays at `7` until the backlog guard runs on hardware.** It is the only new path in `9`/`10` never exercised, and it decides between holding a count and sending it to the wrong server — the one thing that must not be wrong when the fleet is at the station. `lab` is safe to publish to meanwhile, because no station board reads a pre-release.
+
+**Upload the `.bin`s first and `versao.txt` last.** The other order makes the channel announce a version it does not yet serve, and a board checking inside that window downloads the old binary, finds its own `FW_VERSION` different from what `versao.txt` promised, and writes that version to NVS `ota/rejeitada` — after which it would never accept the real one.
+
+The source is at `11`, one cosmetic change ahead of what is published: `modelo 1`'s serial label read `Modelo 1 - Foca` although the model covers Foca, Garen and Wolpac (the Wolpac folder already had the full wording — folder drift, found in a 2026-10-21 bench log). The version went up with it so that a version number keeps identifying exactly one binary.
 
 Validated on the bench 2026-09-23 (Wolpac): counting, the full OTA cycle (`4` → `5`, download, reboot, `Primeiro boot apos atualizacao: imagem confirmada`, Telegram `ATUALIZADO`), and the stuck-state watchdog restoring the scheduled OTA check. To force an OTA test, temporarily lower that variant's `FW_VERSION` below the channel's, flash over USB, and restore it afterwards — all four must share one version or `gerar_release.sh` refuses.
 
@@ -94,7 +100,7 @@ Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `
 
 | var | meaning |
 |---|---|
-| `FW_VERSION` | this build's version (plain integers: `"7"` as of 2026-10-19). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
+| `FW_VERSION` | this build's version (plain integers: `"11"` as of 2026-10-21). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
 | `AMBIENTE_LAB` | **only the seed** for the environment the board assumes on its very first boot with empty NVS, and the one it keeps when neither network answers. The environment itself is detected at runtime — see *Environment detection* below. Still guarded by `#ifndef`, so `gravar.sh`/`gerar_release.sh` can set the seed on the command line without editing the file |
 | `TEMPO_REDE_S` | seconds allowed for each connection attempt (`20`). Worst-case boot spends twice this, when the board has moved and the remembered network is tried first. It was `12` and that was not enough — see the bench note below |

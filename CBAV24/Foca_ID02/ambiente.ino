@@ -199,6 +199,11 @@ void adotarAmbienteBacklog()
   prefsCBA.begin("ambiente", false);
   prefsCBA.putInt("backlog", ambienteLab);
   prefsCBA.end();
+  // Isto e um PALPITE: a informacao de origem nao existe nesses dados. Costuma acertar, porque o
+  // normal e a placa nao ter saido do lugar; erra justamente quando ela saiu, que e o caso de um
+  // cartao com defeito trazido para a bancada. Por isso vai para a mensagem de boot: o operador
+  // ve o que foi assumido e pode discordar antes da primeira passagem drenar o backlog.
+  origemBacklogAdotada = true;
   Serial.println("[SD] Backlog sem origem marcada: assumindo " + String(nomeAmbiente(ambienteLab)) + ".");
 }
 

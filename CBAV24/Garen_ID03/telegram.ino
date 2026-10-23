@@ -111,6 +111,14 @@ String motivoReset()
   }
 }
 
+// O contarPendentesSD() devolve -1 quando o cartao nao monta; escrever "0" ali afirmaria que o
+// cartao esta vazio sem ter conseguido ler o cartao.
+String pendentesSDTexto()
+{
+  long n = contarPendentesSD();
+  return n < 0 ? String("ilegivel") : String(n);
+}
+
 // Mensagem enviada ao fim do setup(), quando já se sabe hora, SD e estado do OTA.
 // Sem Wi-Fi no boot, fica agendada e sai pelo loop ocioso quando a rede voltar.
 void enviarMensagemBoot()
@@ -164,11 +172,17 @@ void enviarMensagemBoot()
   // Com o cartao mudo o flagSD guarda o valor da leitura anterior e nao quer dizer nada: dizer
   // "nao" ali afirmaria que o cartao esta vazio sem ter conseguido ler o cartao.
   m += "\nSD: " + String(flagF == 0 ? "ok" : "FALHOU") + " | pendentes no SD: " + String(flagF != 0 ? "desconhecido" : (flagSD == 1 ? "sim" : "nao")) + " | perdidas na flash: " + String(perdidasFlash);
+  if (origemBacklogAdotada)
+  {
+    m += "\nATENCAO: havia contagem guardada sem registro de onde foi acumulada (SD: " + pendentesSDTexto() +
+         " | flash: " + String(perdidasFlash) + "). ASSUMI " + nomeAmbiente(ambienteLab) +
+         ", que e onde a placa esta agora, e ela vai para esse servidor na proxima passagem. Se veio de outro ambiente, apague LOGREG.csv E POSITION.txt do cartao (os dois juntos) antes disso para descartar o que estava no cartao; o que estava na flash nao tem como desviar.";
+  }
   int origemBacklog = ambienteDoBacklog();
   if (origemBacklog != BACKLOG_SEM_ORIGEM && origemBacklog != ambienteLab)
   {
-    m += "\nATENCAO: " + String(contarPendentesSD()) + " contagem(ns) no SD e " + String(perdidasFlash) + " na flash foram gravadas em " +
-         nomeOrigemBacklog(origemBacklog) + ", mas a placa esta em " + nomeAmbiente(ambienteLab) +
+    m += "\nATENCAO: contagens gravadas em " + String(nomeOrigemBacklog(origemBacklog)) + " (SD: " + pendentesSDTexto() +
+         " | flash: " + String(perdidasFlash) + "), mas a placa esta em " + nomeAmbiente(ambienteLab) +
          ". NAO vou envia-las, para nao lancar no servidor errado. Leve a placa de volta para " +
          nomeOrigemBacklog(origemBacklog) + " para que sejam enviadas, ou apague LOGREG.csv E POSITION.txt do cartao (os dois juntos) para descartar.";
   }

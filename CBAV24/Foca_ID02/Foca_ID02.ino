@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "12"
+#define FW_VERSION "13"
 #define OTA_ASSET  "Foca_ID02.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -302,6 +302,7 @@ bool houveRollback = false;        // o bootloader voltou para esta imagem porqu
 bool binarioVersaoErrada = false;  // baixou a versão X, mas o binário publicado foi compilado com outra FW_VERSION
 bool houveRetrocesso = false;      // subiu numa versão ANTERIOR à que rodava, sem rollback registrado
 unsigned int retrocessos = 0;      // quantas vezes isso já aconteceu nesta placa (NVS "ota"/retrocessos)
+bool origemBacklogAdotada = false; // havia contagem guardada sem origem registrada e ela assumiu o ambiente atual
 
 int ultimoHttpCode = 0;            // ultimo codigo HTTP devolvido por servidor(), lido por atrasado()
 bool ultimoEventoFoiErro = false;  // ja houve um erro de contagem sem passagem valida depois dele

@@ -121,7 +121,14 @@ void enviarMensagemBoot()
   prefsCBA.end();
 
   String m;
-  if (primeiroBootPosOTA || (versaoAnterior.length() > 0 && versaoAnterior != FW_VERSION))
+  if (houveRetrocesso)
+  {
+    // Nao e "ATUALIZADO": a placa andou para tras. Ver verificarEstadoOTA() em ota_update.ino.
+    m += "RETROCESSO: a placa rodava a versao " + versaoAnterior + " e subiu na " FW_VERSION ", sem rollback registrado pelo bootloader.";
+    m += "\nCostuma ser o ponteiro de boot (otadata) perdido, nao a imagem: a versao nova tende a continuar inteira no outro slot. Ocorrencia " + String(retrocessos) + " nesta placa.";
+    m += "\nReiniciou - motivo: " + motivoReset();
+  }
+  else if (primeiroBootPosOTA || (versaoAnterior.length() > 0 && versaoAnterior != FW_VERSION))
   {
     m += "ATUALIZADO: " + (versaoAnterior.length() > 0 ? versaoAnterior : String("?")) + " -> " + FW_VERSION;
   }

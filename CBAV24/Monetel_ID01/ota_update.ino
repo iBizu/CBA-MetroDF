@@ -79,6 +79,22 @@ void verificarEstadoOTA()
   {
     prefsCBA.remove("tentada");
   }
+  // Versão guardada MAIOR do que a que está rodando: a placa andou para trás. Não é o rollback do
+  // ESP-IDF — esse marca a partição como INVALID/ABORTED e cai no bloco acima, e aqui não há nada
+  // marcado. O que se perde é o ponteiro de boot (otadata): sem ele o bootloader cai no primeiro
+  // slot, que pode guardar uma imagem velha. Foi o que o Garen fez em 23/10/2026, indo da 11 para
+  // a 10 entre a estação e a bancada — as duas cópias do otadata liam VALID, ota_seq zerado, e a
+  // 11 continuava íntegra no outro slot (idêntica, byte a byte, à publicada).
+  // Esta checagem não depende da contabilidade do ESP-IDF, que nesse caso não registra nada: é a
+  // única que pega. Só avisa, de propósito — a versão nova não tem defeito, e bloqueá-la deixaria
+  // a placa presa na imagem velha.
+  if (versaoValida(versaoAnterior) && compararVersao(versaoAnterior, FW_VERSION) > 0)
+  {
+    houveRetrocesso = true;
+    retrocessos = prefsCBA.getUInt("retrocessos", 0) + 1;
+    prefsCBA.putUInt("retrocessos", retrocessos);
+    Serial.println("[OTA] RETROCESSO: rodava a " + versaoAnterior + ", subiu na " FW_VERSION " (ocorrencia " + String(retrocessos) + ").");
+  }
   if (versaoAnterior != FW_VERSION)
   {
     prefsCBA.putString("versao", FW_VERSION);   // guarda a versão que está rodando, para a mensagem "atualizado de X para Y"

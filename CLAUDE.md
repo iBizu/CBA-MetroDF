@@ -132,6 +132,23 @@ This also killed the re-flash loop's mystery: running `10`, the board sees cloud
 
 **Practical consequence:** whatever version sits in app0 is where a pointer loss lands. A USB upload writes app0 *and* resets the pointer to it, so flashing a board over USB with the current build is how you stop a fallback from being a downgrade. Leaving a stale image in app0 means every pointer loss repeats this episode.
 
+**Root cause of the SD failure: a cold solder joint on the card reader**, resoldered on the bench 2026-10-23, after which the same board mounted a card on the first try (`SD Ok!`, `pendentes no SD: nao`) cold and freshly powered. Two different cards, one of them new and FAT32, had both failed before that — which is what moved the suspicion from the cards to the board. The original card was never retested on a working reader, so it is an unknown rather than a known bad one.
+
+**The 120 s hangs did not reproduce on the bench, with or without a card.** The board ran 2 h 56 min with the faulty card still installed and never once tripped the task watchdog, heap flat at 201 KB; the no-card run after it was quiet too, but says little, because the control condition already passes. So the hangs belong to the station, and there are two candidates:
+
+- **An intermittent (not open) joint**, stalling SD operations inside the library where nothing feeds the watchdog. Fits that the fault was mechanical, that the station has a vibrating turnstile while the bench does not, and that the card failed *fast* at the bench once the joint had opened completely.
+- **The OTA retry loop.** On the station the board was running `10` with `11` published, and `OTA_CHECAR_NO_BOOT 1` re-runs the check on *every* boot, so each watchdog reboot started another 1.18 MB download over a −82 dBm link: reboot → check → download → hang → reboot, about 2.5 min a turn, which matches the observed cadence. The blind spot is real either way — between the `esp_task_wdt_reset()` before `httpUpdate.update()` and the first `onProgress` callback, nothing feeds the watchdog while DNS, TCP, the TLS handshake and the response headers happen, and `client.setTimeout(30000)` bounds each read at 30 s, so four slow reads reach 120 s.
+
+The first is the more economical explanation, and it needs no coincidence with the OTA. Neither can be tested on this board any more, because the defect is gone: **if the hangs do not come back at the station, it was the joint.** Worth having regardless: a cap on OTA download attempts per cloud version, so a board that cannot complete an update fails it and goes back to counting instead of rebooting all day. The damage at the station was not the failed update, it was a full day of counting nobody.
+
+**Procedure learned — a board that comes back with a dead card must have its flash counter cleared before it returns.** The counts banked in `counterF` adopt the current environment the first time the guard sees them (see *Legacy backlog*), which on a bench is the wrong one. Leaving that marker is not merely cosmetic: back at the station, `marcarAmbienteBacklog()` sees origin `LABORATORIO` against a board in `ESTACAO`, concludes the set has two origins and marks it **`MISTO`** — permanent block — so the next station passage that fails to send strands *real, timestamped* counts together with the stale bench-marked ones. There is no manual route for `counterF`, so clearing it means erasing the NVS region over USB:
+
+```bash
+esptool --port <COM> --chip esp32 --before default-reset erase-region 0x9000 0x5000
+```
+
+Done on the Garen 2026-10-23 (the 151 counts were already written off). It also drops `ambiente/lab` (detection rebuilds it), `ota/versao` (the next boot prints the plain reset reason, since the `ATUALIZADO` line requires a non-empty stored version), `ota/retrocessos` and the `resumo` baselines (the next summary shows totals, with the note it already carries for that). `checkNVS()` recreates the structure on the next boot and restarts once by itself. The carrier board holds GPIO2 high, which blocks automatic entry into the serial bootloader, so **BOOT has to be held by hand** while the command runs — the same thing the otadata read needed.
+
 ### Shelved: bench test of the backlog guard
 
 Written 2026-10-21 and **not yet run** — it needs a turnstile to produce real failed passages, and the only turnstile is at the station. Run it the first time a board is on a bench with one. It touches `segredos.h` only, never tracked source.

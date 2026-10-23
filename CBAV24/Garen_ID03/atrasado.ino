@@ -159,7 +159,6 @@ void atrasado()
     SD.end();   
     nextposition = 0;  // reseta nextposition
     flagSD = 0;   // flag para informar que não existe informação no SD que deve ser enviada ao coordenador// finaliza a comunicação com cartão SD
-    limparAmbienteBacklog();   // LOGREG.csv drenado: nao ha mais origem a proteger
     flagP = 1;   // flag par ainformar que existe informção a ser gravada em POSITION.txt
     escreve = 1;   // seleciona apagar no cartão SD
     cardID();   // chama função cardID para apagar o arquivo POSITION.txt no cartão SD   
@@ -185,6 +184,14 @@ void atrasado()
 
  //  detachInterrupt(PIN_BTN1); 
    // detachInterrupt(PIN_BTN2); 
+  // So agora da para largar a marca de origem: o LOGREG.csv drenou (flagSD) E o contador da flash
+  // foi entregue (flagR). Antes a marca caia junto com o LOGREG.csv e o contador da flash ficava
+  // sem protecao nenhuma -- que e como 147 contagens da estacao quase foram para o banco de
+  // teste em 23/10/2026.
+  if (flagSD != 1 && flagR == 0)
+  {
+    limparAmbienteBacklog();
+  }
 } // fim de void atrasado()        
 
 

@@ -97,6 +97,7 @@ void loop()
       preferences.putUInt("counterF", counterF);   // grava o conteudo de counter F na memoria flash
       counterR = counterF;    // grava o counteudo em counterR para exibir no display
       preferences.end();   // finaliza preferences (memoria flash)
+      marcarAmbienteBacklog();   // foi para a flash: registra em qual ambiente se perdeu
     } // fim if ( flagF == 1 ) 
     resposta = "999";   // reseta resposta para aguardar reposta 000 do coordenador no proximo ciclo
     flagSD = 1;    // flag para informar que existe informação no SD que deve ser enviada ao coordenador
@@ -124,6 +125,7 @@ void loop()
                       preferences.putUInt("counterF", counterF);      // grava o conteudo de counter F na memoria flash
                      counterR = counterF;    // grava o counteudo em counterR para exibir no display
                      preferences.end();   // finaliza preferences (memoria flash)
+                     marcarAmbienteBacklog();   // foi para a flash: registra em qual ambiente se perdeu
  
                     
                    } // fim if ( flagF == 1 ) 

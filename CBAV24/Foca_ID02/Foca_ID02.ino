@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "11"
+#define FW_VERSION "12"
 #define OTA_ASSET  "Foca_ID02.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----

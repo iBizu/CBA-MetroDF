@@ -163,17 +163,32 @@ void limparAmbienteBacklog()
 // assume o ambiente atual, que e onde ele foi acumulado; a partir dai a protecao vale. Sem isto
 // essas linhas ficariam sem origem para sempre e nunca seriam protegidas.
 // Chamada no setup(), depois do leId(), que e quem define flagSD.
+// Contagens guardadas SO na flash (NVS "my-app"/counterF), de quando servidor e cartao falharam
+// juntos. Lido direto da NVS porque o counterR global so e preenchido no loop(), e isto roda no
+// setup(). Usa o prefsCBA, livre neste ponto: o preferences so abre dentro do loop().
+unsigned int pendentesNaFlash()
+{
+  prefsCBA.begin("my-app", true);
+  unsigned int n = prefsCBA.getUInt("counterF", 0);
+  prefsCBA.end();
+  return n;
+}
+
 void adotarAmbienteBacklog()
 {
   // flagSD so quer dizer algo se o cartao respondeu: o fail() nao mexe nela, entao depois de uma
-  // falha de monta ela ainda guarda o valor da leitura anterior.
-  if (flagF != 0) return;                                    // cartao nao respondeu: nao concluir nada
-  if (flagSD != 1)                                           // nao ha backlog
+  // falha de monta ela ainda guarda o valor da leitura anterior. O contador da flash sempre vale.
+  bool cartaoMudo = (flagF != 0);
+  bool temBacklog = (!cartaoMudo && flagSD == 1) || pendentesNaFlash() > 0;
+
+  if (!temBacklog)
   {
-    // Marca orfa: o LOGREG.csv foi apagado na mao, que e como o cartao se limpa aqui. Deixar a
-    // marca faria a proxima passagem perdida ser lida como uma SEGUNDA origem, e o arquivo seria
-    // marcado MISTO -- bloqueado para sempre, tendo uma origem so.
-    if (ambienteDoBacklog() != BACKLOG_SEM_ORIGEM)
+    // Marca orfa: nao ha nada guardado em lugar nenhum, mas sobrou marca. Acontece quando o
+    // LOGREG.csv e apagado na mao, que e como o cartao se limpa aqui. Deixar a marca faria a
+    // proxima contagem perdida ser lida como uma SEGUNDA origem e o conjunto viraria MISTO --
+    // bloqueado para sempre, tendo origem unica. So limpa com o cartao respondendo: com ele
+    // mudo nao da para afirmar que o LOGREG.csv esta vazio.
+    if (!cartaoMudo && ambienteDoBacklog() != BACKLOG_SEM_ORIGEM)
     {
       limparAmbienteBacklog();
       Serial.println("[SD] Nao ha backlog, mas havia marca de origem: marca removida.");

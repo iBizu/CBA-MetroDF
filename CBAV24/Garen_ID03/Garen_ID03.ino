@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "13"
+#define FW_VERSION "14"
 #define OTA_ASSET  "Garen_ID03.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -107,6 +107,12 @@ const int port = 9668;             // igual nos dois ambientes
 // 1 = além do horário programado, verifica atualização logo após conectar no boot.
 // Uma placa que reinicia por erro no firmware ganha assim uma chance de puxar a correção a cada boot (auto-cura).
 #define OTA_CHECAR_NO_BOOT 1
+
+// Quantas vezes tentar BAIXAR a mesma versão antes de desistir. Existe por causa do laço de
+// reinícios: travar durante o download reinicia a placa, o boot tenta de novo, e ela passa o dia
+// reiniciando sem contar ninguém. A verificação agendada abre uma janela nova de tentativas —
+// na estação, uma por dia às 03:00. Ver executarAtualizacaoOTA() em ota_update.ino.
+#define OTA_MAX_TENTATIVAS 3
 
 // ---- Telegram (grupo de monitoramento) ----
 const char* TG_TOKEN = TELEGRAM_TOKEN;
@@ -428,7 +434,7 @@ else
         // formating options  http://www.cplusplus.com/reference/ctime/strftime/      // exibe no  display
 
 #if OTA_CHECAR_NO_BOOT
-  executarAtualizacaoOTA("boot");   // se houver versão nova no GitHub, grava e reinicia aqui
+  executarAtualizacaoOTA("boot", false);   // se houver versão nova no GitHub, grava e reinicia aqui
 #endif
 
   //busca dados no SD para atualizar o display

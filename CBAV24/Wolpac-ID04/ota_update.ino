@@ -78,6 +78,12 @@ void verificarEstadoOTA()
   if (versaoTentada.length() > 0)
   {
     prefsCBA.remove("tentada");
+    if (versaoTentada == FW_VERSION)
+    {
+      // o download desta versão deu certo: a contagem de tentativas não serve mais para nada
+      prefsCBA.remove("tentativas");
+      prefsCBA.remove("tentvers");
+    }
   }
   // Versão guardada MAIOR do que a que está rodando: a placa andou para trás. Não é o rollback do
   // ESP-IDF — esse marca a partição como INVALID/ABORTED e cai no bloco acima, e aqui não há nada
@@ -194,7 +200,9 @@ bool lerVersaoNuvem(String& versaoNuvem)
 
 // Verifica e, se houver versão mais nova, baixa e grava. Se der certo a placa reinicia aqui dentro.
 // "origem" só identifica na Serial/Telegram quem chamou ("boot" ou "agendado").
-void executarAtualizacaoOTA(const char* origem)
+// "novaJanela" zera a contagem de tentativas de download: verdadeiro na verificação agendada,
+// falso na do boot. É o que impede o laço de reinícios (ver o bloco "há versão nova" abaixo).
+void executarAtualizacaoOTA(const char* origem, bool novaJanela)
 {
   if (WiFi.status() != WL_CONNECTED) return;
   Serial.printf("\n[OTA] Verificacao (%s). Versao da placa: %s\n", origem, FW_VERSION);
@@ -233,17 +241,50 @@ void executarAtualizacaoOTA(const char* origem)
     return;
   }
 
-  // ---- há versão nova: baixar ----
+  // ---- há versão nova ----
+  // Trava contra o laço de reinícios: se a placa travar durante o download, o watchdog reinicia,
+  // o boot roda esta mesma verificação (OTA_CHECAR_NO_BOOT) e o download recomeça. Foi assim que o
+  // Garen passou 23/10/2026 reiniciando a cada ~2,5 min na estação — e o prejuízo não foi o OTA
+  // falhar, foi o dia inteiro sem contar ninguém.
+  // A contagem vive na NVS e é gravada ANTES do download, senão a tentativa que mata a placa é
+  // justamente a que não fica registrada: o verificarEstadoOTA() apaga a "tentada" em todo boot e
+  // não sobra rastro de que a placa morreu lá dentro.
+  // Chaves próprias ("tentvers"/"tentativas") em vez da "tentada" por esse mesmo motivo — uma
+  // contagem que zera a cada reinício não trava laço nenhum.
+  prefsCBA.begin("ota", false);
+  if (novaJanela || prefsCBA.getString("tentvers", "") != nuvem)
+  {
+    prefsCBA.putUInt("tentativas", 0);
+    prefsCBA.putString("tentvers", nuvem);
+  }
+  unsigned int tentativas = prefsCBA.getUInt("tentativas", 0);
+  prefsCBA.end();
+
+  if (tentativas >= OTA_MAX_TENTATIVAS)
+  {
+    Serial.println("[OTA] Ja tentei baixar a versao " + nuvem + " " + String(tentativas)
+                 + " vezes sem conseguir. Desisto ate a proxima verificacao agendada, para nao ficar reiniciando.");
+    if (ultimaVersaoNuvemAvisada != nuvem)
+    {
+      ultimaVersaoNuvemAvisada = nuvem;
+      enviarTelegram(cabecalhoTelegram() + "\nOTA: desisti de baixar a versao " + nuvem + " depois de "
+                   + String(tentativas) + " tentativas. Sigo contando na " FW_VERSION " e tento de novo na proxima verificacao agendada."
+                   + " Sinal fraco e a causa mais provavel; para resolver agora, grave por USB.");
+    }
+    return;
+  }
+
   // Avisos no Telegram ("baixando" e, se falhar, "FALHA") saem uma vez por versão da nuvem; as
   // tentativas seguintes da mesma versão são silenciosas (ex.: .bin faltando na release -> 404 a cada 5 min no laboratório).
   // Sucesso não precisa de aviso aqui: a placa reinicia e a mensagem de boot diz "ATUALIZADO".
   bool avisarTelegram = (ultimaVersaoNuvemAvisada != nuvem);
   if (avisarTelegram)
   {
-    enviarTelegram(cabecalhoTelegram() + "\nOTA: baixando versao " + nuvem + " (atual " FW_VERSION ")...");
+    enviarTelegram(cabecalhoTelegram() + "\nOTA: baixando versao " + nuvem + " (atual " FW_VERSION ") - tentativa " + String(tentativas + 1) + "/" + String(OTA_MAX_TENTATIVAS) + "...");
   }
 
   prefsCBA.begin("ota", false);
+  prefsCBA.putUInt("tentativas", tentativas + 1);   // contada ANTES de baixar: se travar no download, o próximo boot já sabe
   prefsCBA.putString("tentada", nuvem);   // para verificarEstadoOTA() saber qual versão foi rejeitada, se houver rollback
   prefsCBA.end();
 
@@ -295,7 +336,7 @@ void verificarHorarioOTA()
     if (millis() - ultimaVerificacaoOTA >= (unsigned long)OTA_INTERVALO_MIN * 60000UL)
     {
       ultimaVerificacaoOTA = millis();
-      executarAtualizacaoOTA("agendado");
+      executarAtualizacaoOTA("agendado", true);
     }
     return;
   }
@@ -305,7 +346,7 @@ void verificarHorarioOTA()
     if (!otaExecutadoNesteMinuto)
     {
       otaExecutadoNesteMinuto = true;
-      executarAtualizacaoOTA("agendado");
+      executarAtualizacaoOTA("agendado", true);
     }
   }
   else

@@ -27,7 +27,7 @@ Serial upload: `./gravar.sh <Variante> <PORTA> [lab|estacao]` (`./gravar.sh --po
 
 **Bench gotcha:** with `teste = 0` the model comes from the jumpers on `PIN_MOD1`/`PIN_MOD2` (GPIO32/33) — exactly one must read HIGH, or `setup()` prints "Erro ao habilitar modelo" and reboots every 5 s forever. On a bare bench board set `teste = 1`, which uses the `modelo` already in each variant's editable block (Monetel `2`, the others `1`).
 
-The sketch uses ~88% of the 1.25 MB app slot. Do not switch to a larger single-app partition scheme — the GitHub OTA path needs the two OTA slots of the default scheme.
+The sketch uses ~90% of the 1.25 MB app slot (1 179 836 bytes on version 13, leaving ~128 KB). Do not switch to a larger single-app partition scheme — the GitHub OTA path needs the two OTA slots of the default scheme.
 
 ### Releases (OTA channels)
 

@@ -9,8 +9,19 @@ void servidor()
     //Variáveis para controle de timeout
     unsigned long startTime = millis();
     bool requestCompleted = false;
-    const unsigned long TIMEOUT_TOTAL = 800; // Timeout total de 800ms
-    const unsigned long TIMEOUT_REQUEST = 400; // Timeout por tentativa de 500ms
+    // Orcamento de tempo do envio. A contagem e BLOQUEANTE: nada e contado enquanto o servidor()
+    // fala com o servidor, por isso estes valores sao curtos de proposito. Foram de 800/400 para
+    // 600/300 em 10/11/2026, para encurtar a janela cega.
+    //
+    // ATENCAO ao que eles NAO fazem: os dois sao conferidos apenas ENTRE tentativas, nunca durante
+    // um http.GET() em andamento. Quem limita uma tentativa isolada e o setConnectTimeout(700) com
+    // o setTimeout(350), mais abaixo. Logo:
+    //   - servidor que conecta e nao responde: o REQUEST corta a segunda tentativa, e isso encurta
+    //     a janela cega de ~770 ms para ~370 ms. E aqui que esta todo o ganho destes dois numeros.
+    //   - servidor inalcancavel: quem manda e o setConnectTimeout, nao estes dois, e ele continua
+    //     em 700 ms de proposito -- ver o comentario la.
+    const unsigned long TIMEOUT_TOTAL = 600;
+    const unsigned long TIMEOUT_REQUEST = 300;
 
     //serv = "/enviarMedicao/255;1;1716579000;1716579090;0;0;100";
 
@@ -70,8 +81,23 @@ else{
         //Configurar timeouts na requisição HTTP
         http.begin(host, port, serv);
         http.addHeader("Content-Type", "application/json"); // Defina o tipo de conteúdo
-        http.setTimeout(350); //Timeout de 500ms para a requisição
-        http.setConnectTimeout(700); //Timeout de 1s para conexão
+        http.setTimeout(350); //Timeout de leitura da resposta
+        // Limite do aperto de mao do TCP, e o que REALMENTE limita uma tentativa isolada: os
+        // TIMEOUT_TOTAL/REQUEST do inicio desta funcao nao interrompem um http.GET() em andamento,
+        // este valor sim. Logo, e o unico que vale quando o servidor esta inalcancavel.
+        //
+        // FOI BAIXADO PARA 400 ms EM 10/11/2026 E DESFEITO ANTES DE PUBLICAR. Nao chegou a nenhuma
+        // placa. O motivo de desfazer: a estacao mede -82 dBm, e num enlace ruim o aperto de mao
+        // passa de 400 ms com facilidade. Quando passa, TODO envio falha e toda passagem vai para o
+        // LOGREG.csv. Contagem nao se perderia -- o atrasado() reentrega e o servidor deduplica por
+        // numid + timestamp, com o horario do momento da passagem -- mas o backlog pararia de
+        // drenar enquanto durasse, porque o atrasado() tambem precisa conectar: o BI ficaria sem
+        // dado em tempo real e o dia inteiro passaria a depender do cartao, que e a corrente mais
+        // fraca numa placa com leitor marginal (ver o incidente do Garen de 23/10/2026).
+        // Em resumo: 700 ms de janela cega de vez em quando e melhor que falhar sempre.
+        // Se um dia valer tentar de novo, o teste tem de ser numa placa so, com o resumo do
+        // Telegram a vista -- e nao nas tres da estacao de uma vez, que e o que o canal latest faz.
+        http.setConnectTimeout(700);
 
         //NOVO CÓDIGO COM TIMEOUT
         atualizatempo = 0;

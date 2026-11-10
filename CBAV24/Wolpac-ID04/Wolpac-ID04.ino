@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "14"
+#define FW_VERSION "16"
 #define OTA_ASSET  "Wolpac-ID04.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -71,6 +71,16 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 
 // 1 = modo calibração: a placa NÃO conta, só imprime as leituras dos sensores na serial (115200).
 #define DEBUG_ADC 0
+
+// ---- Pausa entre os passos da catraca ----
+// Depois de detectar uma transicao de sensor a placa espera isto antes de ler de novo, para o
+// repique do contato nao virar uma segunda transicao. O preco e o oposto: durante essa pausa a
+// placa nao le, e se a catraca avancar dois passos dentro dela a passagem sai errada ou se perde.
+// Era 25 ms e passou a 10 ms em 10/11/2026, porque estavam se perdendo passagens em giro rapido.
+// Um quarto de volta real leva 250 a 500 ms, entao 10 ms continua folgado para o giro normal.
+// Fica num #define e nao nos 79 lugares que usam: com o valor repetido no loop.ino, editar um e
+// esquecer os outros e exatamente o que aconteceu com os limiares do ADC na bancada em 22/09/2026.
+#define DELAY_ESTADO_MS 10
 
 // ---- Vigia de estado preso ----
 // Uma passagem real leva 1 ou 2 segundos. Se a catraca ficar parada FORA do repouso por mais

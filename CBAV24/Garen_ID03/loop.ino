@@ -148,7 +148,7 @@ valor1 = 4095;
 valor2 = 4095;
 
 
-delay(25);
+delay(DELAY_ESTADO_MS);
 
 if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
 {
@@ -177,14 +177,14 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
       if( valor1 < ADC_ACIONADO && valor2  > ADC_REPOUSO) // verifica entradas analogicas
     {
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont1a ;
       
     }
  if( valor1> ADC_REPOUSO && valor2  < ADC_ACIONADO) // verifica entradas analogicas
     {
       cont--;  // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1b ;
     }
 
@@ -199,13 +199,13 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
       if(direcao == 0 || direcao == 1)
       {
       cont = 2 ;  // pula para meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
       }
       if(direcao == 2)
       {
       cont = -2 ;  // pula para meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2b ;
       }
     }
@@ -230,13 +230,13 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
     if(estadoBtn3 == LOW && estadoBtn4 == HIGH)   // verifica se o estado do sensor 1 mudou e se mudou para LIGADO 
     {
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1a ;
     }     
     if(estadoBtn3 == HIGH && estadoBtn4 == LOW )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     {
       cont--;  // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1b ;
     }    
     if(estadoBtn3 == LOW && estadoBtn4 == LOW)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -249,13 +249,13 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
        if(direcao == 0 || direcao == 1)
       {
       cont = 2 ;  // pula para meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
       }
       if(direcao == 2)
       {
       cont = -2 ;  // pula para meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2b ;
       }
     }  
@@ -268,7 +268,7 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
 
    //if(cont != 0)
    //{
-    //delay(25); // delay se mudou de estado
+    //delay(DELAY_ESTADO_MS); // delay se mudou de estado
   // }
 }    // fim     while (cont == 0) 
 
@@ -305,14 +305,14 @@ Serial.end();
     if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
     }  
                    
     if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont0a ;
     }      
 
@@ -326,13 +326,13 @@ Serial.end();
       if(direcao == 0 || direcao == 1)
       {
         cont = 3 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont3a ;
       }
       if(direcao == 2)
       {
       cont = -1 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1b ;
       }
     }
@@ -358,13 +358,13 @@ Serial.end();
     if(estadoBtn3 == LOW && estadoBtn4 == LOW)  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
     }                    
     if(estadoBtn3 == HIGH && estadoBtn4 == HIGH)  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont0a ;
     }      
     if(estadoBtn3 == HIGH && estadoBtn4 == LOW)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -377,13 +377,13 @@ Serial.end();
       if(direcao == 0 || direcao == 1)
       {
         cont = 3 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont3a ;
       }
       if(direcao == 2)
       {
       cont = -1 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1b ;
       }
       }
@@ -396,7 +396,7 @@ Serial.end();
 
    //if(cont != 1)
   // {
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
   // }
 
   }     // fim   while (cont == 1)   
@@ -423,14 +423,14 @@ cont2a:
     if(valor1 > ADC_REPOUSO  &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont3a ;
     }  
                    
     if(valor1 < ADC_ACIONADO  &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont1a ;
     }      
 
@@ -444,13 +444,13 @@ cont2a:
       if(direcao == 0 || direcao == 1)
       {
         cont = 4 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
       }
     }
@@ -475,13 +475,13 @@ cont2a:
     if(estadoBtn3 == HIGH && estadoBtn4 == LOW)  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont3a ;
     }                   
     if(estadoBtn3 == LOW && estadoBtn4 == HIGH)   // verifica se o estado do sensor 1 mudou e se mudou para LIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1a ;
     }  
     if(estadoBtn3 == HIGH && estadoBtn4 == HIGH)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -494,13 +494,13 @@ cont2a:
       if(direcao == 0 || direcao == 1)
       {
         cont = 4 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
       }
       } 
@@ -512,7 +512,7 @@ cont2a:
 
     //if(cont != 2)
   // {
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
    //}
   }   // fim   while (cont == 2) 
 
@@ -537,14 +537,14 @@ cont2a:
     if(valor1 > ADC_REPOUSO  &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4a ;
     }  
                    
     if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
     }      
 
@@ -558,13 +558,13 @@ cont2a:
        if(direcao == 0 || direcao == 1)
       {
         cont = 4 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
       }
     }
@@ -587,13 +587,13 @@ cont2a:
    if(estadoBtn3 == HIGH && estadoBtn4 == HIGH)  // verifica se o estado do sensor 2 mudou e se mudou para DESLIGADO
    { 
       cont++;  // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4a ;
    }  
     if(estadoBtn3 == LOW && estadoBtn4 == LOW)
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
     } 
    if(estadoBtn3 == LOW && estadoBtn4 == HIGH)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -606,13 +606,13 @@ cont2a:
  if(direcao == 0 || direcao == 1)
       {
         cont = 4 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
       }       
      }
@@ -624,7 +624,7 @@ cont2a:
 
  //if(cont != 3)
    //{
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
    //}
     
   }    // fim    while (cont == 3)  
@@ -678,7 +678,7 @@ Serial.begin(115200);// inicia comunicação serial
    
     flagM = 0;    // desabilita flag para msgID
     flagE = 0;    // desabilita flag para CounterE
-    delay(25);
+    delay(DELAY_ESTADO_MS);
   }   // fim if (cont==4)
 
 
@@ -709,14 +709,14 @@ if (tipoEntr == 1)
     if(valor1 > ADC_REPOUSO  &&   valor2 > ADC_REPOUSO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont0a ;    
     }  
                    
     if(valor1 < ADC_ACIONADO  &&   valor2 < ADC_ACIONADO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2b ;
     }      
 
@@ -730,13 +730,13 @@ if (tipoEntr == 1)
       if(direcao == 0 || direcao == 1)
       {
         cont = 1 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont1a ;
       }
       if(direcao == 2)
       {
       cont = -3 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont3b ;
       } 
     }
@@ -760,13 +760,13 @@ if (tipoEntr == 1)
    if(estadoBtn3 == LOW && estadoBtn4 == LOW)
    { 
       cont--; // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont2b ;
    }  
    if(estadoBtn3 == HIGH && estadoBtn4 == HIGH)
     { 
       cont++;    // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont0a ;
     }  
     if(estadoBtn3 == LOW && estadoBtn4 == HIGH)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -779,13 +779,13 @@ if (tipoEntr == 1)
        if(direcao == 0 || direcao == 1)
       {
         cont = 1 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont1a ;
       }
       if(direcao == 2)
       {
       cont = -3 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont3b ;
       } 
       } 
@@ -796,7 +796,7 @@ if (tipoEntr == 1)
 
     // if(cont != -1)
    //{
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
    //} 
   }     // fim    while (cont == -1)  
 
@@ -821,14 +821,14 @@ if (tipoEntr == 1)
     if(valor1 > ADC_REPOUSO  &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont1b ;
     }  
                    
     if(valor1 < ADC_ACIONADO  &&   valor2 > ADC_REPOUSO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont3b ;
     }      
 
@@ -842,13 +842,13 @@ if (tipoEntr == 1)
         if(direcao == 0 || direcao == 1)
       {
         cont = 4 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont4a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
       } 
     }
@@ -873,13 +873,13 @@ if (tipoEntr == 1)
     if(estadoBtn3 == LOW && estadoBtn4 == HIGH)
     { 
       cont--;    // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont3b ;
     }  
     if(estadoBtn3 == HIGH && estadoBtn4 == LOW)
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont1b ;
     }  
     if(estadoBtn3 == HIGH && estadoBtn4 == HIGH)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -892,13 +892,13 @@ if (tipoEntr == 1)
   if(direcao == 0 || direcao == 1)
       {
         cont = 4 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont4a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
       }       } 
     }
@@ -908,7 +908,7 @@ if (tipoEntr == 1)
    
      //if(cont != -2)
   // {
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
    //}   
   }     // fim     while (cont == -2)
 
@@ -932,14 +932,14 @@ if (tipoEntr == 1)
     if(valor1 < ADC_ACIONADO   &&   valor2 < ADC_ACIONADO )  // verifica se o estado do sensor 2 mudou e se mudou para LIGADO
     { 
       cont++;   // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont2b ;
     }  
                    
     if(valor1 > ADC_REPOUSO &&   valor2 > ADC_REPOUSO  )  // verifica se o estado do sensor 1 mudou e se mudou para DESLIGADO
     { 
       cont--;     // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
     }      
 
@@ -953,13 +953,13 @@ if (tipoEntr == 1)
         if(direcao == 0 || direcao == 1)
       {
         cont = 3 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont3a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
       } 
     }
@@ -985,13 +985,13 @@ if (tipoEntr == 1)
     if(estadoBtn3 == HIGH && estadoBtn4 == HIGH)
     { 
       cont--;   // um quarto de giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
     }  
     if(estadoBtn3 == LOW && estadoBtn4 == LOW)
     { 
       cont++;    // um quarto de giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont2b ;
     }  
     if(estadoBtn3 == HIGH && estadoBtn4 == LOW)  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -1004,13 +1004,13 @@ if (tipoEntr == 1)
          if(direcao == 0 || direcao == 1)
       {
         cont = 3 ;  // pula  meia volta (possivel erro)
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont3a ;
       }
       if(direcao == 2)
       {
       cont = -4 ;  // pula  meia volta (possivel erro)
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
       } 
       } 
@@ -1022,7 +1022,7 @@ if (tipoEntr == 1)
     
     //if(cont != -3)
   // {
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
    //}
   }    // fim     while (cont == -3)
 
@@ -1074,7 +1074,7 @@ Serial.begin(115200);// inicia comunicação serial
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
      flagM = 0;   // desabilita flag para msgID
     flagS = 0;  // desabilita flag para CounterS
-    delay(25);
+    delay(DELAY_ESTADO_MS);
   }     // fim     while (cont == -4)
 
  cont5a: 
@@ -1137,7 +1137,7 @@ Serial.begin(115200);// inicia comunicação serial
    
     flagM = 0;    // desabilita flag
     flagW = 0;     // desabilita flag 
-    delay(25);
+    delay(DELAY_ESTADO_MS);
   }     // fim   if (cont < -4 || cont> 4)
 
  } // fim if (modelo == 1)
@@ -1171,13 +1171,13 @@ Serial.begin(115200);// inicia comunicação serial
     if(estadoBtn1 == LOW && estadoBtn2 == HIGH)   // sensor 1 acionado: meia volta para frente
     {
       cont++;   // meio giro para frente
-        delay(25); // delay se mudou de estado
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1c; 
     }     
     if(estadoBtn1 == HIGH && estadoBtn2 == LOW)  // sensor 2 acionado: meia volta para tras
     {      
       cont--;  // meio giro para trás 
-        delay(25); // delay se mudou de estado    
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado    
       goto cont1d;  
     }    
     if(estadoBtn1 == LOW && estadoBtn2 == LOW   )  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
@@ -1189,14 +1189,14 @@ Serial.begin(115200);// inicia comunicação serial
     if(estadoBtn1 == LOW && estadoBtn2 == LOW   )  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
     {
     cont = 5 ;  // algum erro na leitura dos sensores
-    delay(25); // delay se mudou de estado
+    delay(DELAY_ESTADO_MS); // delay se mudou de estado
     goto cont3c; 
     }
     }     
 
    //if(cont != 0)
    //{
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
   // }
   }    // fim     while (cont == 0) 
 
@@ -1229,14 +1229,14 @@ Serial.end();
     if(estadoBtn1 == HIGH && estadoBtn2 == HIGH  )  // verifica se o estado do sensor 2 mudou e se mudou para DESLIGADO
     { 
       cont ++ ;     // meio giro para frente
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
      goto cont2c; 
     }     
       
           
     //if(cont != 1)
   // {
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
    //}
 
   }     // fim   while (cont == 1)   
@@ -1288,7 +1288,7 @@ Serial.begin(115200);// inicia comunicação serial
     flagM = 0;    // desabilita flag para msgID
     flagE = 0;    // desabilita flag para CounterE
 
-    delay(25);
+    delay(DELAY_ESTADO_MS);
    
   }   // fim if (cont == 2)
 
@@ -1319,13 +1319,13 @@ Serial.end();
      if(estadoBtn1 == HIGH && estadoBtn2 == HIGH )  // verifica se o estado do sensor 2 mudou e se mudou para DESLIGADO
     { 
       cont -- ;     // meio giro para trás
-      delay(25); // delay se mudou de estado
+      delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2c;
     }  
    
   // if(cont != -1)
    //{
-   // delay(25); // delay se mudou de estado
+   // delay(DELAY_ESTADO_MS); // delay se mudou de estado
   // }
     
   }     // fim    while (cont == -1)  
@@ -1378,7 +1378,7 @@ Serial.begin(115200);// inicia comunicação serial
     esp_task_wdt_reset(); //Reseta o temporizador do watchdog
      flagM = 0;   // desabilita flag para msgID
     flagS = 0;  // desabilita flag para CounterS
-    delay(25);
+    delay(DELAY_ESTADO_MS);
   }     // fim     while (cont == -2)
 
 
@@ -1445,12 +1445,12 @@ Serial.begin(115200);// inicia comunicação serial
    
     flagM = 0;    // desabilita flag
     flagW = 0;     // desabilita flag 
-    delay(25);
+    delay(DELAY_ESTADO_MS);
   }     // fim   if (cont < -2 || cont > 2)
 
 }  // fim if  (modelo == 2)
 
-delay(25);
+delay(DELAY_ESTADO_MS);
 preferences.end();
 esp_task_wdt_reset(); //Reseta o temporizador do watchdog
 

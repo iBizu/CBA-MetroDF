@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "16"
+#define FW_VERSION "17"
 #define OTA_ASSET  "Garen_ID03.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -101,6 +101,23 @@ const char* const HOST_ESTACAO  = "wsserver02-prod.metro.gdfnet.df";   // Web Se
 #define RESUMO_INTERVALO_MIN  30   // bancada: resumo no Telegram a cada 30 minutos
 #define OTA_HORA       3     // estação: verifica atualização às 03:00 (estação fechada)
 #define OTA_MINUTO     0
+
+// Minutos de janela da verificação agendada, a partir de OTA_MINUTO. Dentro dela a placa tenta uma
+// vez por minuto e para assim que uma verificação COMPLETAR, ou seja, assim que conseguir ler o
+// versao.txt — o que acontecer com o download depois disso não reabre a janela.
+// Existe porque uma chance só por dia era frágil: em 11/11/2026 o Foca, a -86 dBm, perdeu a janela
+// e ficou na 14 enquanto as outras três subiram para a 16. A estação está fechada neste horário,
+// então as tentativas extras não custam contagem nenhuma.
+#define OTA_JANELA_MIN 10
+
+// Depois de quantos dias SEGUIDOS sem conseguir ler o versao.txt a placa avisa no Telegram.
+// A falha é silenciosa no instante em que acontece, de propósito — se o GitHub não responde, o
+// Telegram provavelmente também não. Mas no acumulado esse silêncio esconde uma placa parada numa
+// versão velha, que é exatamente o que aconteceu com o Foca: só deu para notar pelo "- v14" no
+// cabeçalho do resumo. O aviso vai pela fila, então sai quando a rede deixar, nem que seja horas
+// depois (o resumo das 23:45 do Foca saiu às 05:30).
+#define OTA_DIAS_SEM_VERSAO 2
+
 #define RESUMO_HORA    23    // estação: resumo diário no fechamento
 #define RESUMO_MINUTO  45
 

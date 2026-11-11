@@ -14,7 +14,10 @@
 #include <HTTPUpdate.h>
 #include <esp_ota_ops.h>
 
-bool otaExecutadoNesteMinuto = false;   // estação: evita repetir dentro do mesmo minuto
+// Estado da janela de verificação agendada (só a estação usa; a bancada vai por intervalo).
+int  ultimoMinutoOTA = -1;              // minuto em que rodou a última tentativa desta janela
+bool otaConcluidoNestaJanela = false;   // a janela de hoje já conseguiu ler o versao.txt
+bool janelaOTAAberta = false;           // já houve a primeira tentativa desta janela
 unsigned long ultimaVerificacaoOTA = 0;  // bancada: controle do intervalo
 String ultimaVersaoNuvemAvisada = "";    // evita repetir no Telegram o mesmo aviso sobre a mesma versão
 
@@ -200,17 +203,22 @@ bool lerVersaoNuvem(String& versaoNuvem)
 
 // Verifica e, se houver versão mais nova, baixa e grava. Se der certo a placa reinicia aqui dentro.
 // "origem" só identifica na Serial/Telegram quem chamou ("boot" ou "agendado").
-// "novaJanela" zera a contagem de tentativas de download: verdadeiro na verificação agendada,
-// falso na do boot. É o que impede o laço de reinícios (ver o bloco "há versão nova" abaixo).
-void executarAtualizacaoOTA(const char* origem, bool novaJanela)
+// "novaJanela" zera a contagem de tentativas de download: verdadeiro na primeira tentativa da
+// verificação agendada, falso na do boot. É o que impede o laço de reinícios (ver "há versão nova").
+//
+// Devolve TRUE quando a verificação completou, isto é, quando a placa chegou a saber qual é a
+// versão da nuvem — inclusive se já estava atualizada ou se o download falhou. Devolve FALSE só
+// quando nem isso foi possível (sem Wi-Fi, ou GitHub fora de alcance), que é o único caso em que
+// vale repetir dentro da janela. O que governa repetir o DOWNLOAD é o OTA_MAX_TENTATIVAS, não isto.
+bool executarAtualizacaoOTA(const char* origem, bool novaJanela)
 {
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (WiFi.status() != WL_CONNECTED) return false;
   Serial.printf("\n[OTA] Verificacao (%s). Versao da placa: %s\n", origem, FW_VERSION);
 
   String nuvem;
   if (!lerVersaoNuvem(nuvem))
   {
-    return;   // sem internet/GitHub fora: silencioso (o Telegram também não alcançaria)
+    return false;   // nem soube a versão da nuvem: silencioso agora, contabilizado por dia abaixo
   }
   Serial.println("[OTA] Versao na nuvem: " + nuvem);
 
@@ -218,7 +226,7 @@ void executarAtualizacaoOTA(const char* origem, bool novaJanela)
   if (cmp == 0)
   {
     Serial.println("[OTA] Placa ja esta atualizada.");
-    return;
+    return true;
   }
   if (cmp < 0)
   {
@@ -228,7 +236,7 @@ void executarAtualizacaoOTA(const char* origem, bool novaJanela)
       ultimaVersaoNuvemAvisada = nuvem;
       enviarTelegram(cabecalhoTelegram() + "\nOTA: a release do canal esta na versao " + nuvem + ", anterior a da placa (" FW_VERSION "). Ignorada.");
     }
-    return;
+    return true;
   }
   if (nuvem == versaoRejeitada)
   {
@@ -238,7 +246,7 @@ void executarAtualizacaoOTA(const char* origem, bool novaJanela)
       ultimaVersaoNuvemAvisada = nuvem;
       enviarTelegram(cabecalhoTelegram() + "\nOTA: a versao " + nuvem + " ja foi rejeitada por rollback nesta placa. Publique uma versao maior.");
     }
-    return;
+    return true;
   }
 
   // ---- há versão nova ----
@@ -271,7 +279,7 @@ void executarAtualizacaoOTA(const char* origem, bool novaJanela)
                    + String(tentativas) + " tentativas. Sigo contando na " FW_VERSION " e tento de novo na proxima verificacao agendada."
                    + " Sinal fraco e a causa mais provavel; para resolver agora, grave por USB.");
     }
-    return;
+    return true;
   }
 
   // Avisos no Telegram ("baixando" e, se falhar, "FALHA") saem uma vez por versão da nuvem; as
@@ -326,9 +334,50 @@ void executarAtualizacaoOTA(const char* origem, bool novaJanela)
     ultimaVersaoNuvemAvisada = nuvem;
     enviarTelegram(cabecalhoTelegram() + "\nOTA: FALHA ao baixar/gravar a versao " + nuvem + " - " + erro + "\n(continuo tentando a cada verificacao; so aviso de novo se a versao na nuvem mudar ou apos reiniciar)");
   }
+  // O download falhou, mas a versao da nuvem foi lida: a verificacao COMPLETOU e a janela do dia
+  // nao reabre por isso. Repetir o download e papel do OTA_MAX_TENTATIVAS, nao da janela.
+  return true;
 }
 
 // Chamada no loop ocioso.
+#if (OTA_MINUTO + OTA_JANELA_MIN) > 60
+  #error "OTA_MINUTO + OTA_JANELA_MIN tem de caber dentro da hora (<= 60)."
+#endif
+
+// Dias SEGUIDOS em que a janela agendada terminou sem conseguir ler o versao.txt. Mora na NVS
+// porque o que ele mede se conta em dias, e um reinício no meio não pode zerar a conta.
+void contabilizarDiaSemVersao()
+{
+  prefsCBA.begin("ota", false);
+  unsigned int dias = prefsCBA.getUInt("semversao", 0) + 1;
+  prefsCBA.putUInt("semversao", dias);
+  prefsCBA.end();
+
+  Serial.println("[OTA] A janela de hoje terminou sem conseguir ler o versao.txt. Dias seguidos: "
+               + String(dias));
+  if (dias < OTA_DIAS_SEM_VERSAO) return;
+
+  // Pela FILA, não pelo envio direto: se o GitHub não respondeu, o Telegram provavelmente também
+  // não responde agora — mas a fila insiste de minuto em minuto e sai quando a rede deixar.
+  agendarTelegram("Nao consigo verificar atualizacao ha " + String(dias) + " dia(s): a janela das "
+                + String(OTA_HORA) + "h terminou sem conseguir ler o versao.txt do GitHub. Sigo"
+                + " contando normalmente na versao " FW_VERSION ", mas nao recebo versao nova enquanto"
+                + " isso durar. Sinal: " + String(WiFi.RSSI()) + " dBm."
+                + " Se persistir, grave por USB ou verifique o enlace desta placa.");
+}
+
+void zerarDiasSemVersao()
+{
+  prefsCBA.begin("ota", true);
+  unsigned int dias = prefsCBA.getUInt("semversao", 0);
+  prefsCBA.end();
+  if (dias == 0) return;   // caso normal: não gasta escrita de flash
+  prefsCBA.begin("ota", false);
+  prefsCBA.remove("semversao");
+  prefsCBA.end();
+  Serial.println("[OTA] Voltei a ler o versao.txt (estava ha " + String(dias) + " dia(s) sem conseguir).");
+}
+
 void verificarHorarioOTA()
 {
   if (ambienteLab)
@@ -341,16 +390,37 @@ void verificarHorarioOTA()
     return;
   }
   if (!relogioValido()) return;   // sem hora certa não dá para saber se a estação está fechada
-  if (rtc.getHour(true) == OTA_HORA && rtc.getMinute() == OTA_MINUTO)
+
+  int minuto = rtc.getMinute();
+  bool naJanela = (rtc.getHour(true) == OTA_HORA
+                   && minuto >= OTA_MINUTO
+                   && minuto < OTA_MINUTO + OTA_JANELA_MIN);
+
+  if (!naJanela)
   {
-    if (!otaExecutadoNesteMinuto)
+    // Janela fechou. Se ela passou inteira sem a placa saber a versão da nuvem, conta o dia.
+    if (janelaOTAAberta && !otaConcluidoNestaJanela)
     {
-      otaExecutadoNesteMinuto = true;
-      executarAtualizacaoOTA("agendado", true);
+      contabilizarDiaSemVersao();
     }
+    janelaOTAAberta = false;
+    otaConcluidoNestaJanela = false;
+    ultimoMinutoOTA = -1;
+    return;
   }
-  else
+
+  if (otaConcluidoNestaJanela) return;     // a janela de hoje já cumpriu o seu papel
+  if (minuto == ultimoMinutoOTA) return;   // no máximo uma tentativa por minuto
+  ultimoMinutoOTA = minuto;
+
+  // "novaJanela" zera a contagem de downloads e vale só na PRIMEIRA tentativa do dia: se fosse a
+  // cada minuto, o OTA_MAX_TENTATIVAS ganharia dez janelas por dia e deixaria de travar coisa
+  // alguma, que é justamente o laço de reinícios que a versão 14 foi feita para conter.
+  bool primeiraDaJanela = !janelaOTAAberta;
+  janelaOTAAberta = true;
+  if (executarAtualizacaoOTA("agendado", primeiraDaJanela))
   {
-    otaExecutadoNesteMinuto = false;
+    otaConcluidoNestaJanela = true;
+    zerarDiasSemVersao();
   }
 }

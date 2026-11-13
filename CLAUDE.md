@@ -40,7 +40,11 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 
 State as of 2026-10-20: the published version is `7`, promoted to **latest** on 2026-10-20 (`gh release edit 7 --latest`) — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones, and `7` is the first release with the millisecond timestamp. Right after the promotion GitHub's edge cache was still answering the old `versao.txt` on the plain `releases/latest/download/` URL; it had caught up the same day, and `latest`, tag `7` and tag `lab` all answer `7` (checked 2026-10-20). A stale read there is harmless anyway, because the firmware refuses downgrades. Earlier releases were superseded before any board consumed them.
 
-**Channel state (2026-11-11): both channels carry `17`** (release `17` is **latest**, tag `lab` is the pre-release), with the source at the same version. Checked right after publishing: `latest`, tag `17` and tag `lab` all answer `17`, and **all four** binaries served from both paths match the local build by sha256; no edge-cache lag, as with `16`.
+**Channel state (2026-11-13): both channels carry `18`** (release `18` is **latest**, tag `lab` is the pre-release), with the source at the same version. Checked right after publishing: `latest`, tag `18` and tag `lab` all answer `18`, and **all four** binaries served from both paths match the local build by sha256.
+
+`18` is the confirmation re-read in `modelo 2` plus the `ruidoDescartado` counter — see *The Monetel's phantom entry*. Only the Monetel changes behaviour; on the other three the new code never runs. **What to read in the next summaries is the Monetel's `Ruido descartado` line**, because that number, not the absence of a false count, is what says whether the fix is doing anything.
+
+`17` was the OTA window plus the stuck-version alert, published 2026-11-11.
 
 **Fleet: Monetel, Garen and Wolpac are on `16`; the Foca is still on `14`.** The three took `16` at 03:00 on 11/11 and will take `17` at the next 03:00. The Foca is the one `17` was written for and is also the one least likely to receive it — see *The Foca missed the 03:00 window*. **That board comes off `14` over USB, or not at all**; do not wait for the channel to do it.
 
@@ -231,7 +235,7 @@ Each release carries the four `<Variant>.ino.bin` plus `versao.txt` (content = `
 
 | var | meaning |
 |---|---|
-| `FW_VERSION` | this build's version (plain integers: `"17"` as of 2026-11-11). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
+| `FW_VERSION` | this build's version (plain integers: `"18"` as of 2026-11-13). Must equal the `versao.txt` of the GitHub release that ships this binary; keep it the same across the four variants |
 | `OTA_ASSET` | this variant's binary name inside the release — the name the IDE exports (`<sketch>.ino.bin`, so `Wolpac-ID04.ino.bin` with a hyphen) |
 | `AMBIENTE_LAB` | **only the seed** for the environment the board assumes on its very first boot with empty NVS, and the one it keeps when neither network answers. The environment itself is detected at runtime — see *Environment detection* below. Still guarded by `#ifndef`, so `gravar.sh`/`gerar_release.sh` can set the seed on the command line without editing the file |
 | `TEMPO_REDE_S` | seconds allowed for each connection attempt (`20`). Worst-case boot spends twice this, when the board has moved and the remembered network is tried first. It was `12` and that was not enough — see the bench note below |

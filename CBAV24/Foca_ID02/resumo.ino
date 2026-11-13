@@ -64,6 +64,13 @@ void enviarResumo()
     m += "\nSaidas: +" + String(counterS - s0) + " (total " + String(counterS) + ")";
     m += "\nErros de giro: +" + String(counterW - w0) + " (total " + String(counterW) + ")";
   }
+  // So aparece quando houve algo a mostrar, para nao poluir o resumo das placas que nao veem
+  // ruido nenhum (no modelo 1 a confirmacao nem chega a rodar).
+  if (ruidoDescartado > 0)
+  {
+    m += "\nRuido descartado: " + String(ruidoDescartado) + " (transicao que nao se confirmou; seriam contagens falsas)";
+    ruidoDescartado = 0;
+  }
   m += "\nPendentes no SD: " + (pendentes < 0 ? String("SD SEM RESPOSTA") : String(pendentes));
   m += " | perdidas na flash: " + String(counterR);
   m += "\nWi-Fi " + String(WiFi.RSSI()) + " dBm | ligado ha " + String(millis() / 3600000UL) + " h | heap " + String(ESP.getFreeHeap() / 1024) + " KB";

@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "17"
+#define FW_VERSION "18"
 #define OTA_ASSET  "Wolpac-ID04.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -81,6 +81,19 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 // Fica num #define e nao nos 79 lugares que usam: com o valor repetido no loop.ino, editar um e
 // esquecer os outros e exatamente o que aconteceu com os limiares do ADC na bancada em 22/09/2026.
 #define DELAY_ESTADO_MS 10
+
+// ---- Confirmacao da transicao (so o modelo 2 usa) ----
+// Quanto esperar e reler antes de ACEITAR que um sensor mudou de estado.
+// Existe porque no modelo 2 a passagem tem apenas dois passos, entao UMA leitura espuria vira uma
+// contagem inteira: o repouso aceita, o passo seguinte ve o repouso de volta e fecha a passagem.
+// Foi assim que o Monetel registrou entradas que nunca aconteceram (13/11/2026) -- sempre no
+// sentido de ENTRADA, porque a placa-mae segura o GPIO2 (saida) em nivel alto e o GPIO15
+// (entrada) nao tem esse pull-up, entao e nele que o ruido cai.
+// O modelo 1 nao precisa disto: com 4 passos, voltar ao repouso a partir do passo 1 faz cont--
+// e cancela sozinho, de modo que um glitch isolado nao produz contagem nenhuma.
+// Custa isto uma vez por passagem, numa passagem que dura 250 a 500 ms. Aumentar rejeita ruido
+// mais longo e atrasa a contagem na mesma medida.
+#define CONFIRMA_MS 10
 
 // ---- Vigia de estado preso ----
 // Uma passagem real leva 1 ou 2 segundos. Se a catraca ficar parada FORA do repouso por mais
@@ -288,6 +301,10 @@ int estadoMod4 = LOW;   // estado inicial do pino de habilitação 4 = 0
 
 //conta o  movimento de giro da catraca: 4 é um giro completo para frente, -4 é um giro completo para trás
 int cont = 0 ;    // posição inicial da catraca =0
+// Transicoes descartadas por nao se confirmarem na releitura (ver CONFIRMA_MS). Vai no resumo do
+// Telegram: sem este numero so da para esperar uma contagem falsa NAO aparecer, o que nunca prova
+// que a confirmacao esta pegando alguma coisa.
+unsigned int ruidoDescartado = 0;
 
 
 //habilita os pinos para conectar botões/sensores

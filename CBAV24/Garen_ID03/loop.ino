@@ -1168,18 +1168,37 @@ Serial.begin(115200);// inicia comunicação serial
     // A condicao antiga exigia (direcao == 1 || direcao == 0) aqui e (direcao == 2 || direcao == 0)
     // na saida, e direcao nunca voltava a zero neste ramo — entao a placa so contava passagens
     // no mesmo sentido da primeira, descartando as demais em silencio (confirmado em bancada 24/09/2026).
+    // CONFIRMA ANTES DE CONTAR. A releitura abaixo e a mesma que o ramo "os dois acionados" logo
+    // adiante ja fazia; faltava justamente nos ramos de um sensor so, que sao os que fecham uma
+    // passagem no modelo 2. Sem ela a placa contava primeiro e conferia depois: uma leitura
+    // espuria no GPIO15 bastava para o cont0c aceitar, o cont1c ver o repouso de volta e a
+    // entrada ser enviada. Ver CONFIRMA_MS no sketch principal.
     if(estadoBtn1 == LOW && estadoBtn2 == HIGH)   // sensor 1 acionado: meia volta para frente
     {
-      cont++;   // meio giro para frente
+      delay(CONFIRMA_MS);   // aguarda e confirma que nao foi ruido
+      estadoBtn1 = digitalRead(PIN_BTN1);  // Lê o sensor 1
+      estadoBtn2 = digitalRead(PIN_BTN2);  // Lê o sensor 2
+      if(estadoBtn1 == LOW && estadoBtn2 == HIGH)
+      {
+        cont++;   // meio giro para frente
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
-      goto cont1c; 
-    }     
+        goto cont1c;
+      }
+      ruidoDescartado++;   // nao se confirmou: era ruido, nao passageiro
+    }
     if(estadoBtn1 == HIGH && estadoBtn2 == LOW)  // sensor 2 acionado: meia volta para tras
-    {      
-      cont--;  // meio giro para trás 
-        delay(DELAY_ESTADO_MS); // delay se mudou de estado    
-      goto cont1d;  
-    }    
+    {
+      delay(CONFIRMA_MS);   // aguarda e confirma que nao foi ruido
+      estadoBtn1 = digitalRead(PIN_BTN1);  // Lê o sensor 1
+      estadoBtn2 = digitalRead(PIN_BTN2);  // Lê o sensor 2
+      if(estadoBtn1 == HIGH && estadoBtn2 == LOW)
+      {
+        cont--;  // meio giro para trás
+        delay(DELAY_ESTADO_MS); // delay se mudou de estado
+        goto cont1d;
+      }
+      ruidoDescartado++;   // nao se confirmou: era ruido, nao passageiro
+    }
     if(estadoBtn1 == LOW && estadoBtn2 == LOW   )  // verifica se o estado do sensor 1 e 2 mudaram ao mesmo tempo (mecanicamente deveria ser impossível)
     {
     delay(10); // aguarda para verfica possivel erro

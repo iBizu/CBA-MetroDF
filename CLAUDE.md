@@ -40,23 +40,15 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 
 State as of 2026-10-20: the published version is `7`, promoted to **latest** on 2026-10-20 (`gh release edit 7 --latest`) — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones, and `7` is the first release with the millisecond timestamp. Right after the promotion GitHub's edge cache was still answering the old `versao.txt` on the plain `releases/latest/download/` URL; it had caught up the same day, and `latest`, tag `7` and tag `lab` all answer `7` (checked 2026-10-20). A stale read there is harmless anyway, because the firmware refuses downgrades. Earlier releases were superseded before any board consumed them.
 
-**Channel state (2026-11-16): the station channel carries `20`; the lab channel is still on `19`.** Release `20` is **latest** and verified — `latest` and tag `20` both answer `20`, and all four binaries served from `latest` match the local build by sha256. **The `lab` tag was not updated**: replacing its assets needs `gh release upload lab --clobber`, which this environment refused as a destructive action. Harmless for now, since all four boards are at the station and read `latest`, but the two channels are out of step until someone runs:
-
-```bash
-gh release upload lab --clobber release/lab/*.ino.bin && gh release upload lab --clobber release/lab/versao.txt
-```
-
-(binaries first, `versao.txt` last, as always).
+**Channel state (2026-11-16): both channels carry `20`, verified.** `latest`, tag `20` and tag `lab` all answer `20`, and the four binaries served from each match the local build by sha256. Release `20` is **latest**; the `lab` tag is still a pre-release, which replacing its assets does not change. The lab assets went up with `gh release upload lab --clobber` (binaries first, `versao.txt` last) — an auto-approving environment may refuse that command as destructive, in which case it has to be run by hand; a lab channel left behind is harmless while all four boards are at the station reading `latest`, but it means a bench board pulls the older build.
 
 `20` measures the blind window and moves the counter writes out of the passage — see *Two people, one count*. `19` zeroed `DELAY_ESTADO_MS` on the Wolpac only, an experiment the camera footage has since shown to be beside the point.
-
-`19` zeroes `DELAY_ESTADO_MS` **on the Wolpac only** — see *Zeroing the Wolpac's pause*. The other three are unchanged in behaviour. `18` was the `modelo 2` confirmation re-read plus the `ruidoDescartado` counter; `17` the OTA window plus the stuck-version alert.
 
 `18` is the confirmation re-read in `modelo 2` plus the `ruidoDescartado` counter — see *The Monetel's phantom entry*. Only the Monetel changes behaviour; on the other three the new code never runs. **What to read in the next summaries is the Monetel's `Ruido descartado` line**, because that number, not the absence of a false count, is what says whether the fix is doing anything.
 
 `17` was the OTA window plus the stuck-version alert, published 2026-11-11.
 
-**Fleet: Monetel, Garen and Wolpac are on `16`; the Foca is still on `14`.** The three took `16` at 03:00 on 11/11 and will take `17` at the next 03:00. The Foca is the one `17` was written for and is also the one least likely to receive it — see *The Foca missed the 03:00 window*. **That board comes off `14` over USB, or not at all**; do not wait for the channel to do it.
+**Fleet (2026-11-16): Monetel, Garen and Wolpac are on `18`; the Foca is still on `14`.** The three take `20` at the next 03:00. **Nothing ever runs `19`**: it was published at 14:30 and superseded by `20` at 17:52 the same day, so the boards skip straight past it — which costs nothing, because the Wolpac's `DELAY_ESTADO_MS 0` is still in the variant block and therefore ships inside `20` as well. The Foca is the board `17` was written for and the one least likely to receive anything — see *The Foca missed the 03:00 window*. **That board comes off `14` over USB, or not at all**; do not wait for the channel to do it.
 
 `17` is the OTA window plus the stuck-version alert. It does not touch counting.
 

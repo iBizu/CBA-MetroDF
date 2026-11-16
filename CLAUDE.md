@@ -40,7 +40,9 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 
 State as of 2026-10-20: the published version is `7`, promoted to **latest** on 2026-10-20 (`gh release edit 7 --latest`) — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones, and `7` is the first release with the millisecond timestamp. Right after the promotion GitHub's edge cache was still answering the old `versao.txt` on the plain `releases/latest/download/` URL; it had caught up the same day, and `latest`, tag `7` and tag `lab` all answer `7` (checked 2026-10-20). A stale read there is harmless anyway, because the firmware refuses downgrades. Earlier releases were superseded before any board consumed them.
 
-**Channel state (2026-11-13): both channels carry `18`** (release `18` is **latest**, tag `lab` is the pre-release), with the source at the same version. Checked right after publishing: `latest`, tag `18` and tag `lab` all answer `18`, and **all four** binaries served from both paths match the local build by sha256.
+**Channel state (2026-11-16): both channels carry `19`** (release `19` is **latest**, tag `lab` is the pre-release), with the source at the same version. Checked right after publishing: `latest`, tag `19` and tag `lab` all answer `19`, and all four binaries served from both paths match the local build by sha256.
+
+`19` zeroes `DELAY_ESTADO_MS` **on the Wolpac only** — see *Zeroing the Wolpac's pause*. The other three are unchanged in behaviour. `18` was the `modelo 2` confirmation re-read plus the `ruidoDescartado` counter; `17` the OTA window plus the stuck-version alert.
 
 `18` is the confirmation re-read in `modelo 2` plus the `ruidoDescartado` counter — see *The Monetel's phantom entry*. Only the Monetel changes behaviour; on the other three the new code never runs. **What to read in the next summaries is the Monetel's `Ruido descartado` line**, because that number, not the absence of a false count, is what says whether the fix is doing anything.
 

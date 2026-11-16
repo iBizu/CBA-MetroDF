@@ -40,7 +40,15 @@ Two GitHub release channels, selected by `AMBIENTE_LAB` at compile time:
 
 State as of 2026-10-20: the published version is `7`, promoted to **latest** on 2026-10-20 (`gh release edit 7 --latest`) — `lab` (pre-release) carries the `7` lab binaries, release `7` the station ones, and `7` is the first release with the millisecond timestamp. Right after the promotion GitHub's edge cache was still answering the old `versao.txt` on the plain `releases/latest/download/` URL; it had caught up the same day, and `latest`, tag `7` and tag `lab` all answer `7` (checked 2026-10-20). A stale read there is harmless anyway, because the firmware refuses downgrades. Earlier releases were superseded before any board consumed them.
 
-**Channel state (2026-11-16): both channels carry `19`** (release `19` is **latest**, tag `lab` is the pre-release), with the source at the same version. Checked right after publishing: `latest`, tag `19` and tag `lab` all answer `19`, and all four binaries served from both paths match the local build by sha256.
+**Channel state (2026-11-16): the station channel carries `20`; the lab channel is still on `19`.** Release `20` is **latest** and verified — `latest` and tag `20` both answer `20`, and all four binaries served from `latest` match the local build by sha256. **The `lab` tag was not updated**: replacing its assets needs `gh release upload lab --clobber`, which this environment refused as a destructive action. Harmless for now, since all four boards are at the station and read `latest`, but the two channels are out of step until someone runs:
+
+```bash
+gh release upload lab --clobber release/lab/*.ino.bin && gh release upload lab --clobber release/lab/versao.txt
+```
+
+(binaries first, `versao.txt` last, as always).
+
+`20` measures the blind window and moves the counter writes out of the passage — see *Two people, one count*. `19` zeroed `DELAY_ESTADO_MS` on the Wolpac only, an experiment the camera footage has since shown to be beside the point.
 
 `19` zeroes `DELAY_ESTADO_MS` **on the Wolpac only** — see *Zeroing the Wolpac's pause*. The other three are unchanged in behaviour. `18` was the `modelo 2` confirmation re-read plus the `ruidoDescartado` counter; `17` the OTA window plus the stuck-version alert.
 

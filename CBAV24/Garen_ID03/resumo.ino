@@ -66,6 +66,16 @@ void enviarResumo()
   }
   // So aparece quando houve algo a mostrar, para nao poluir o resumo das placas que nao veem
   // ruido nenhum (no modelo 1 a confirmacao nem chega a rodar).
+  // Quanto tempo a placa passa cega depois de cada passagem. E aqui que se ve se o envio e o
+  // cartao ainda estao comendo a pessoa seguinte.
+  if (janelaCegaN > 0)
+  {
+    m += "\nJanela cega: media " + String(janelaCegaSoma / janelaCegaN) + " ms, maxima " + String(janelaCegaMax)
+       + " ms (" + String(janelaCegaN) + " passagens)";
+    janelaCegaSoma = 0;
+    janelaCegaMax = 0;
+    janelaCegaN = 0;
+  }
   if (ruidoDescartado > 0)
   {
     m += "\nRuido descartado: " + String(ruidoDescartado) + " (transicao que nao se confirmou; seriam contagens falsas)";
@@ -118,6 +128,34 @@ bool estadoPreso()
   return true;
 }
 
+// Grava no cartao os contadores que estao so na RAM. Chamada do laco ocioso, e so depois de a
+// catraca ficar parada por FLUSH_CONTADORES_MS: gravar na primeira iteracao ociosa cairia no mesmo
+// instante em que a gravacao acontecia antes, que e justamente quando vem a pessoa seguinte.
+void gravarContadores()
+{
+  if (!contadoresSujos) return;
+  if (millis() - ultimaPassagem < FLUSH_CONTADORES_MS) return;   // ainda pode vir gente atras
+
+  flagE = 1; flagS = 1; flagW = 1;
+  escreve = 1; cardID();   // apaga os txt antigos
+  escreve = 0; cardID();   // regrava a partir da RAM
+  // Se o cartao falhou no meio, o fail() ja pos os flags em 2 para recriar tudo na proxima
+  // montagem que der certo -- nao desfazer isso.
+  if (flagE == 1) flagE = 0;
+  if (flagS == 1) flagS = 0;
+  if (flagW == 1) flagW = 0;
+  if (flagF == 0) contadoresSujos = false;   // so da por gravado se o cartao respondeu
+}
+
+// Registra quanto tempo a placa ficou sem ler os sensores por causa de uma passagem.
+void registrarJanelaCega(unsigned long ms)
+{
+  janelaCegaN++;
+  janelaCegaSoma += ms;
+  if (ms > janelaCegaMax) janelaCegaMax = ms;
+  ultimaPassagem = millis();
+}
+
 // Chamada no loop ocioso.
 void verificarHorarioResumo()
 {
@@ -150,6 +188,7 @@ void verificarHorarioResumo()
 void tarefasOciosas()
 {
   ArduinoOTA.handle();        // programação pela IDE (porta de rede)
+  gravarContadores();         // persiste os contadores com a catraca parada (ver acima)
   verificarHorarioOTA();      // atualização pelo GitHub
   verificarHorarioResumo();   // resumo no Telegram
   enviarTelegramPendente();   // avisos agendados durante a contagem (ex.: falha do SD)

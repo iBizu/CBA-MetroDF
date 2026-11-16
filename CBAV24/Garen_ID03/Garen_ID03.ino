@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "19"
+#define FW_VERSION "20"
 #define OTA_ASSET  "Garen_ID03.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -77,6 +77,19 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 // Fica num #define e nao nos 79 lugares que usam: com o valor repetido no loop.ino, editar um e
 // esquecer os outros e exatamente o que aconteceu com os limiares do ADC na bancada em 22/09/2026.
 #define DELAY_ESTADO_MS 10
+
+// ---- Quando persistir os contadores no cartao ----
+// Os contadores de ENTRADAS/SAIDAS/ERROS.txt ficam em RAM durante a operacao e vao para o cartao
+// so com a catraca parada ha pelo menos isto. Antes eram gravados DENTRO da passagem, o que
+// custava tres montagens do cartao (uma leitura no leId() e duas no par apaga/regrava do cardID())
+// mais as escritas -- tudo com a placa cega, que e quando a proxima pessoa esta passando.
+// Foi assim que a catraca de saida da Estrada Parque perdia a segunda pessoa de cada dupla
+// (confirmado em video, 16/11/2026: o bloqueio girava duas vezes e a placa so via a primeira).
+// A espera existe porque gravar na primeira iteracao ociosa cairia no mesmo instante de antes.
+// Estes arquivos NAO alimentam a BI: o pacote enviado nao leva contador nenhum, eles so aparecem
+// na linha de totais do resumo. Por isso adiar e barato -- um reinicio no meio de um lote custa
+// algumas unidades nos TOTAIS do resumo, e nada na BI.
+#define FLUSH_CONTADORES_MS 2000
 
 // ---- Confirmacao da transicao (so o modelo 2 usa) ----
 // Quanto esperar e reler antes de ACEITAR que um sensor mudou de estado.
@@ -301,6 +314,17 @@ int cont = 0 ;    // posição inicial da catraca =0
 // Telegram: sem este numero so da para esperar uma contagem falsa NAO aparecer, o que nunca prova
 // que a confirmacao esta pegando alguma coisa.
 unsigned int ruidoDescartado = 0;
+
+// Contadores ainda nao gravados no cartao, e quando foi a ultima passagem (para esperar a catraca
+// parar antes de gravar). Ver FLUSH_CONTADORES_MS.
+bool contadoresSujos = false;
+unsigned long ultimaPassagem = 0;
+
+// Janela cega: quanto tempo a placa passa sem ler os sensores depois de fechar uma passagem.
+// E o numero que faltava para parar de estimar quanto custam o envio e o cartao.
+unsigned long janelaCegaSoma = 0;
+unsigned long janelaCegaMax = 0;
+unsigned int  janelaCegaN = 0;
 
 
 //habilita os pinos para conectar botões/sensores

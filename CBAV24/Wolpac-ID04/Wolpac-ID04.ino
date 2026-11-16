@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "18"
+#define FW_VERSION "19"
 #define OTA_ASSET  "Wolpac-ID04.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -80,7 +80,23 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 // Um quarto de volta real leva 250 a 500 ms, entao 10 ms continua folgado para o giro normal.
 // Fica num #define e nao nos 79 lugares que usam: com o valor repetido no loop.ino, editar um e
 // esquecer os outros e exatamente o que aconteceu com os limiares do ADC na bancada em 22/09/2026.
-#define DELAY_ESTADO_MS 10
+// ZERADO NESTA VARIANTE (16/11/2026), como experimento: a catraca de saida da Estrada Parque
+// continuava perdendo contagens com 10 ms e a equipe quis ver o comportamento sem pausa nenhuma.
+// As outras tres seguem em 10.
+//
+// delay(0) e seguro: o delay() do core chama vTaskDelay(0), que nao bloqueia, apenas cede a vez
+// ao escalonador. Nao trava, nao atrapalha o watchdog.
+//
+// A ARITMETICA DIZ QUE ISTO NAO DEVE RESOLVER, e vale ter escrito para a proxima vez. A pausa so
+// acontece DEPOIS de uma transicao detectada, e um quarto de volta real leva 250 a 500 ms: para
+// perder um passo por causa de 10 ms, a catraca teria de girar 25 a 50 vezes mais rapido que o
+// normal. A janela cega que de fato importa e outra -- o servidor() bloqueia de ~370 ms a ~1 s
+// depois de CADA passagem, e nada e contado enquanto ele fala com o servidor. Isso e 10 a 25 vezes
+// maior que esta pausa, e numa porta de saida com gente saindo em lote e o candidato obvio.
+// Se o experimento nao mudar nada, e para la que se deve olhar, nao para este numero.
+//
+// Para desfazer: voltar para 10.
+#define DELAY_ESTADO_MS 0
 
 // ---- Confirmacao da transicao (so o modelo 2 usa) ----
 // Quanto esperar e reler antes de ACEITAR que um sensor mudou de estado.

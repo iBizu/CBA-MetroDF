@@ -198,12 +198,14 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
     {
       if(direcao == 0 || direcao == 1)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = 2 ;  // pula para meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = -2 ;  // pula para meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2b ;
@@ -248,12 +250,14 @@ if (modelo == 1)  // se o bloqueio é modelo foca. garen ou wolpac
     {      
        if(direcao == 0 || direcao == 1)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = 2 ;  // pula para meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = -2 ;  // pula para meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont2b ;
@@ -325,12 +329,14 @@ Serial.end();
     { 
       if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
         cont = 3 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont3a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = -1 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1b ;
@@ -376,12 +382,14 @@ Serial.end();
       {
       if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
         cont = 3 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont3a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = -1 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont1b ;
@@ -443,12 +451,24 @@ cont2a:
     { 
       if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+        cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+        delay(DELAY_ESTADO_MS);
+        goto cont0a;
+#endif
         cont = 4 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
@@ -493,12 +513,24 @@ cont2a:
       {
       if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+        cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+        delay(DELAY_ESTADO_MS);
+        goto cont0a;
+#endif
         cont = 4 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
@@ -557,12 +589,24 @@ cont2a:
     { 
        if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+        cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+        delay(DELAY_ESTADO_MS);
+        goto cont0a;
+#endif
         cont = 4 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
@@ -605,12 +649,24 @@ cont2a:
     {
  if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+        cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+        delay(DELAY_ESTADO_MS);
+        goto cont0a;
+#endif
         cont = 4 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
         goto cont4a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
       goto cont4b ;
@@ -729,12 +785,14 @@ if (tipoEntr == 1)
     { 
       if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
         cont = 1 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont1a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = -3 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont3b ;
@@ -778,12 +836,14 @@ if (tipoEntr == 1)
       {
        if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
         cont = 1 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont1a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
       cont = -3 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont3b ;
@@ -841,12 +901,24 @@ if (tipoEntr == 1)
     {
         if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+        cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+        delay(DELAY_ESTADO_MS);
+        goto cont0a;
+#endif
         cont = 4 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont4a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
@@ -891,12 +963,24 @@ if (tipoEntr == 1)
       {
   if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+        cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+        delay(DELAY_ESTADO_MS);
+        goto cont0a;
+#endif
         cont = 4 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont4a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
@@ -952,12 +1036,19 @@ if (tipoEntr == 1)
     { 
         if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
         cont = 3 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont3a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;
@@ -1003,12 +1094,19 @@ if (tipoEntr == 1)
       {
          if(direcao == 0 || direcao == 1)
       {
+        saltoMeiaVolta++;   // um passo do giro nao foi visto (este salto nao fecha passagem)
         cont = 3 ;  // pula  meia volta (possivel erro)
         delay(DELAY_ESTADO_MS); // delay se mudou de estado
          goto cont3a ;
       }
       if(direcao == 2)
       {
+      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+#if DESCARTA_SALTO_MEIA_VOLTA
+      cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
+      delay(DELAY_ESTADO_MS);
+      goto cont0a;
+#endif
       cont = -4 ;  // pula  meia volta (possivel erro)
       delay(DELAY_ESTADO_MS); // delay se mudou de estado
        goto cont4b ;

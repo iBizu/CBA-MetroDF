@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "20"
+#define FW_VERSION "21"
 #define OTA_ASSET  "Monetel_ID01.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -77,6 +77,24 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 // Fica num #define e nao nos 79 lugares que usam: com o valor repetido no loop.ino, editar um e
 // esquecer os outros e exatamente o que aconteceu com os limiares do ADC na bancada em 22/09/2026.
 #define DELAY_ESTADO_MS 10
+
+// ---- Salto de meia volta: confiar ou descartar ----
+// O loop.ino tem 28 atalhos que disparam quando a leitura atual NAO e vizinha do estado em que a
+// placa esta, ou seja, quando um passo do giro nao foi visto. O atalho assume que o giro
+// continuou no ultimo sentido conhecido e avanca o contador -- em 14 deles isso FECHA a passagem.
+// Ele existe para cobrir a janela cega: a placa ficava ate ~1 s sem ler depois de cada passagem e
+// perdia estados de verdade. A versao 20 encolheu essa janela, entao hoje ele dispara menos por
+// giro rapido e mais pelo caso abaixo.
+// O PROBLEMA: quem empurra a catraca ate a metade e solta leva o estado de 00 (meia volta) de
+// volta para 11 (repouso). 11 nao e vizinho de 00, o atalho dispara, assume que a segunda metade
+// do giro aconteceu e EMITE UMA PASSAGEM que nunca existiu. Relatado na Foca em 19/11/2026.
+// A releitura de 10 ms que ja existe nesses pontos nao protege contra isso: ela confirma que a
+// catraca voltou mesmo ao repouso, e a passagem e contada assim mesmo.
+//   1 = descarta o giro (cont = 0) quando o salto fecharia uma passagem. Nao conta o empurrao,
+//       mas perde o giro rapido legitimo em que um estado tenha sido de fato pulado.
+//   0 = comportamento historico: confia no salto e fecha a passagem.
+// Os dois contadores do resumo saem nos DOIS modos, entao da para medir antes de decidir.
+#define DESCARTA_SALTO_MEIA_VOLTA 0
 
 // ---- Quando persistir os contadores no cartao ----
 // Os contadores de ENTRADAS/SAIDAS/ERROS.txt ficam em RAM durante a operacao e vao para o cartao
@@ -314,6 +332,12 @@ int cont = 0 ;    // posição inicial da catraca =0
 // Telegram: sem este numero so da para esperar uma contagem falsa NAO aparecer, o que nunca prova
 // que a confirmacao esta pegando alguma coisa.
 unsigned int ruidoDescartado = 0;
+
+// Saltos de meia volta: quantas vezes a placa leu um estado que nao e vizinho do atual, isto e,
+// um passo do giro que ela nao viu. O segundo contador e o subconjunto que FECHA passagem -- e
+// esse que vira contagem falsa quando alguem empurra a catraca sem passar.
+unsigned int saltoMeiaVolta = 0;
+unsigned int passagemPorSalto = 0;
 
 // Contadores ainda nao gravados no cartao, e quando foi a ultima passagem (para esperar a catraca
 // parar antes de gravar). Ver FLUSH_CONTADORES_MS.

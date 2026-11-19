@@ -81,6 +81,19 @@ void enviarResumo()
     m += "\nRuido descartado: " + String(ruidoDescartado) + " (transicao que nao se confirmou; seriam contagens falsas)";
     ruidoDescartado = 0;
   }
+  // Saltos de meia volta. O segundo numero e o que interessa: sao os saltos que fechariam uma
+  // passagem, isto e, os candidatos a contagem falsa por empurrao. Ver DESCARTA_SALTO_MEIA_VOLTA.
+  if (saltoMeiaVolta > 0)
+  {
+    m += "\nSaltos de meia volta: " + String(saltoMeiaVolta) + " | fechariam passagem: " + String(passagemPorSalto);
+#if DESCARTA_SALTO_MEIA_VOLTA
+    m += " (descartadas)";
+#else
+    m += " (contadas)";
+#endif
+    saltoMeiaVolta = 0;
+    passagemPorSalto = 0;
+  }
   m += "\nPendentes no SD: " + (pendentes < 0 ? String("SD SEM RESPOSTA") : String(pendentes));
   m += " | perdidas na flash: " + String(counterR);
   m += "\nWi-Fi " + String(WiFi.RSSI()) + " dBm | ligado ha " + String(millis() / 3600000UL) + " h | heap " + String(ESP.getFreeHeap() / 1024) + " KB";

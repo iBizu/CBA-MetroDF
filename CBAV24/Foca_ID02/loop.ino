@@ -451,7 +451,7 @@ cont2a:
     { 
       if(direcao == 0 || direcao == 1)
       {
-        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+        saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
         cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
         delay(DELAY_ESTADO_MS);
@@ -463,7 +463,7 @@ cont2a:
       }
       if(direcao == 2)
       {
-      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+      saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
       cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
       delay(DELAY_ESTADO_MS);
@@ -513,7 +513,7 @@ cont2a:
       {
       if(direcao == 0 || direcao == 1)
       {
-        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+        saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
         cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
         delay(DELAY_ESTADO_MS);
@@ -525,7 +525,7 @@ cont2a:
       }
       if(direcao == 2)
       {
-      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+      saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
       cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
       delay(DELAY_ESTADO_MS);
@@ -689,6 +689,14 @@ cont2a:
   cont4a: 
   if (cont == 4)  // posição 4 (giro completo para frente)
   { 
+#if SENTIDO_UNICO == 2
+    // Esta catraca so faz o outro sentido: um giro completo de entrada aqui nao e
+    // passageiro. Ver CLAUDE.md, "An exit on an entry gate". Conta e volta ao repouso.
+    giroImpossivel++;
+    cont = 0;
+    delay(DELAY_ESTADO_MS);
+    goto cont0a;
+#endif
     direcao = 1;
 
 
@@ -901,7 +909,7 @@ if (tipoEntr == 1)
     {
         if(direcao == 0 || direcao == 1)
       {
-        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+        saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
         cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
         delay(DELAY_ESTADO_MS);
@@ -913,7 +921,7 @@ if (tipoEntr == 1)
       }
       if(direcao == 2)
       {
-      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+      saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
       cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
       delay(DELAY_ESTADO_MS);
@@ -963,7 +971,7 @@ if (tipoEntr == 1)
       {
   if(direcao == 0 || direcao == 1)
       {
-        saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+        saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
         cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
         delay(DELAY_ESTADO_MS);
@@ -975,7 +983,7 @@ if (tipoEntr == 1)
       }
       if(direcao == 2)
       {
-      saltoMeiaVolta++; passagemPorSalto++;   // um passo nao foi visto, e este salto FECHA passagem
+      saltoMeiaVolta++; passagemPorSalto++; saltoVoltouRepouso++;   // um passo nao foi visto, e este salto FECHA passagem
 #if DESCARTA_SALTO_MEIA_VOLTA
       cont = 0;   // nao fecha uma passagem que a placa nao viu acontecer (empurrao, ver CLAUDE.md)
       delay(DELAY_ESTADO_MS);
@@ -1128,6 +1136,14 @@ if (tipoEntr == 1)
  cont4b: 
   if (cont == -4)    // posição -4 (giro completo para tras)
   { 
+#if SENTIDO_UNICO == 1
+    // Esta catraca so faz o outro sentido: um giro completo de saida aqui nao e
+    // passageiro. Ver CLAUDE.md, "An exit on an entry gate". Conta e volta ao repouso.
+    giroImpossivel++;
+    cont = 0;
+    delay(DELAY_ESTADO_MS);
+    goto cont0a;
+#endif
 
       direcao = 2;
    //Serial.end();
@@ -1362,6 +1378,14 @@ Serial.end();
    cont2c: 
   if (cont == 2)  // posição 2 (giro completo para frente)
   { 
+#if SENTIDO_UNICO == 2
+    // Esta catraca so faz o outro sentido: um giro completo de entrada aqui nao e
+    // passageiro. Ver CLAUDE.md, "An exit on an entry gate". Conta e volta ao repouso.
+    giroImpossivel++;
+    cont = 0;
+    delay(DELAY_ESTADO_MS);
+    goto cont0c;
+#endif
 
      direcao = 1;
     // Serial.end();
@@ -1451,6 +1475,14 @@ Serial.end();
  cont2d: 
   if (cont == -2)    // posição -4 (giro completo para tras)
   {   
+#if SENTIDO_UNICO == 1
+    // Esta catraca so faz o outro sentido: um giro completo de saida aqui nao e
+    // passageiro. Ver CLAUDE.md, "An exit on an entry gate". Conta e volta ao repouso.
+    giroImpossivel++;
+    cont = 0;
+    delay(DELAY_ESTADO_MS);
+    goto cont0c;
+#endif
   direcao = 2;
 
  //Serial.end();

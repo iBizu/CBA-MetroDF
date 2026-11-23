@@ -21,7 +21,7 @@
 // ---- Versão do firmware ----
 // FW_VERSION deve ser igual ao conteúdo do versao.txt publicado na release do GitHub que contém este binário.
 // O OTA só baixa se a versão na nuvem for MAIOR que esta (nunca faz downgrade). Sempre aumente ao publicar.
-#define FW_VERSION "21"
+#define FW_VERSION "22"
 #define OTA_ASSET  "Wolpac-ID04.ino.bin"   // nome do binário desta variante dentro da release
 
 // ---- Ambiente ----
@@ -115,6 +115,15 @@ int teste = 0 ;  // (0 para funcionamento definitivo, vai funcionar conforme mod
 //   0 = comportamento historico: confia no salto e fecha a passagem.
 // Os dois contadores do resumo saem nos DOIS modos, entao da para medir antes de decidir.
 #define DESCARTA_SALTO_MEIA_VOLTA 0
+
+// ---- Sentido unico desta catraca ----
+// Cada um dos quatro bloqueios gira para um lado so. Um giro completo no outro sentido nao e
+// passageiro: ou alguem forcou a barreira, ou a placa reconstruiu o giro ao contrario depois de
+// ficar cega (ver CLAUDE.md, "An exit on an entry gate"). 0 = aceita os dois, 1 = so entrada, 2 = so saida.
+#define SENTIDO_UNICO 2
+// Quantos giros no sentido impossivel num mesmo resumo ja merecem desconfiar da fiacao: se os
+// cabos dos sensores forem trocados de novo, o filtro acima descartaria tudo caladinho.
+#define GIRO_IMPOSSIVEL_ALERTA 20
 
 // ---- Quando persistir os contadores no cartao ----
 // Os contadores de ENTRADAS/SAIDAS/ERROS.txt ficam em RAM durante a operacao e vao para o cartao
@@ -358,6 +367,8 @@ unsigned int ruidoDescartado = 0;
 // esse que vira contagem falsa quando alguem empurra a catraca sem passar.
 unsigned int saltoMeiaVolta = 0;
 unsigned int passagemPorSalto = 0;
+unsigned int saltoVoltouRepouso = 0;   // subconjunto: o atalho leu a barreira de volta no repouso
+unsigned int giroImpossivel = 0;       // giros completos no sentido que esta catraca nao faz
 
 // Contadores ainda nao gravados no cartao, e quando foi a ultima passagem (para esperar a catraca
 // parar antes de gravar). Ver FLUSH_CONTADORES_MS.

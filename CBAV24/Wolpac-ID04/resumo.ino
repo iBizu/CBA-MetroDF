@@ -91,8 +91,27 @@ void enviarResumo()
 #else
     m += " (contadas)";
 #endif
+    if (passagemPorSalto > 0)
+    {
+      // So um dos dois casos e empurrao. "Voltou ao repouso" e a barreira de volta no lugar (meia
+      // volta abandonada); "pulou um passo" e um giro de verdade em que a placa perdeu um estado,
+      // e descartar esse custa uma passagem real.
+      m += "\n  voltou ao repouso (empurrao): " + String(saltoVoltouRepouso)
+         + " | pulou um passo do giro: " + String(passagemPorSalto - saltoVoltouRepouso);
+    }
     saltoMeiaVolta = 0;
     passagemPorSalto = 0;
+    saltoVoltouRepouso = 0;
+  }
+  // Giro completo no sentido que esta catraca nao faz (ver SENTIDO_UNICO). Nao foi enviado.
+  if (giroImpossivel > 0)
+  {
+    m += "\nGiros no sentido impossivel: " + String(giroImpossivel) + " (descartados)";
+    if (giroImpossivel >= GIRO_IMPOSSIVEL_ALERTA)
+    {
+      m += "\nATENCAO: muitos giros no sentido errado. Confira se os cabos dos sensores foram trocados.";
+    }
+    giroImpossivel = 0;
   }
   m += "\nPendentes no SD: " + (pendentes < 0 ? String("SD SEM RESPOSTA") : String(pendentes));
   m += " | perdidas na flash: " + String(counterR);

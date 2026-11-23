@@ -205,14 +205,22 @@ The 22/11 summaries brought the Foca a `Saidas: +1 (total 4150)` on a gate that 
 
 **The two directions share their states; only the order tells them apart.** Forward is `11 → 01 → 00 → 10 → 11`, reverse is `11 → 10 → 00 → 01 → 11`. The state `10` is step 3 of a forward rotation and step 1 of a reverse one. So a board sitting at `cont == 0` while the barrier is actually mid-rotation reads whatever state it catches next as the **start of a reverse rotation**.
 
-Two causes fit, and the firmware cannot separate them:
+**It is the push springing back, and the operator identified it: the Foca counts an exit now and then when somebody shoves the barrier and does not go through** (reported 2026-11-23). Nobody else touches that wiring, so the swapped-cable hypothesis is out. The chain is exact, and the code confirms each step:
 
-- somebody turned the barrier backwards through a full rotation;
-- **aliasing across the blind window**: during a queue the board samples the forward stream sparsely and happens to land on `10, 00, 01, 11` in that order, each one a state that genuinely occurred, skipping the ones between. The Foca is the busiest board (840 passages) with the widest window (`maxima 1112 ms`), which is exactly where such an alignment is most likely. Once in 840 passages is the right order of magnitude for a coincidence.
+1. The push drives the barrier forward to **three quarters**, state `10` (`cont == 3` if the board had been watching).
+2. It was not watching: the board was inside `servidor()` or the counter flush, finishing the previous passage. The Foca is the busiest board (840 passages) and `Janela cega` peaks at `1112 ms`.
+3. The person lets go, the barrier **springs back** — a real reverse movement, `10 → 00 → 01 → 11`, and fast, because it is a spring and not a person walking.
+4. The board resumes at `cont0a` believing `cont == 0`, and in `cont0a` a reading of `10` (`estadoBtn3 HIGH && estadoBtn4 LOW`) means `cont--`. So the four readings it gets — `10, 00, 01, 11` — decrement `cont` four times: −1, −2, −3, −4. `cont4b` fires an exit.
+
+**Three quarters is the threshold, and that is why it is rare.** A push that only reaches the half turn (`00`) lands on the "both triggered" branch, which re-reads after `delay(10)` and jumps to `cont = 2` with `direcao == 1`; the spring-back from there unwinds through `01` and `11` to `cont = 0` and counts nothing. And **without** the blind window no push counts either: the forward steps raise `cont` and the spring-back lowers it back through the same neighbours. It takes a hard shove *and* the board busy at that exact instant, which is the right frequency for one event in 840 passages against 66 pushes caught by `DESCARTA_SALTO_MEIA_VOLTA` in the same day.
+
+So the earlier reading of this — sparse sampling of a *forward* rotation aliasing into reverse — was the wrong shape. The reverse movement is real; what the board gets wrong is believing it started from rest.
 
 **Fixed in version 22 by `SENTIDO_UNICO`**, which puts into the firmware a fact this file already recorded: each of the four turnstiles is one-way. A completed rotation in the direction that gate does not do is not a passenger, so it is not sent; `giroImpossivel` counts it and the summary reports it. **This is the one discard that cannot lose a real count**, because the direction being thrown away is physically impossible there — unlike `DESCARTA_SALTO_MEIA_VOLTA`, which is a judgement call between two real errors.
 
 **The failure mode it introduces, and the guard against it.** The sensor cables on the Foca and the Monetel have been swapped before (see the known artefacts under *Hardware gotchas*). With a direction filter in place, a swap stops producing *wrong* counts and starts producing *no* counts, silently — which is worse. So when `giroImpossivel` reaches `GIRO_IMPOSSIVEL_ALERTA` (20) inside one summary period, the summary carries a line telling the operator to check the wiring. A swap puts essentially every passage in the impossible direction, so that threshold is crossed on the first day rather than after a month of lost data.
+
+**`giroImpossivel` is primarily a measurement, not an alarm.** The operator states that nobody but the team touches that wiring now, so a fresh cable swap is not a live risk and the threshold line is cheap insurance rather than the point. What the counter is actually for is that **the push-into-exit event was only ever visible when it reached the BI as a wrong count**. Now every one of them is counted and reported whether or not it would have been sent, so the Foca's daily `Giros no sentido impossivel` is the first direct measure of how often the barrier is being shoved hard enough to spring back through three quarters while the board is busy.
 
 **Also in 22: the half-turn counters are split**, because `fechariam passagem` was adding up two different events:
 
